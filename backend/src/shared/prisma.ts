@@ -9,9 +9,32 @@ const store: any = {
 const mockPrisma = {
     user: {
         findUnique: async ({ where }: any) => {
-            const user = store.users.find((u: any) => u.phone === where.phone);
-            // console.log('[MockDB] Find User:', where, user ? 'Found' : 'Not Found');
+            let user = null;
+            if (where.phone) {
+                user = store.users.find((u: any) => u.phone === where.phone);
+            } else if (where.id) {
+                user = store.users.find((u: any) => u.id === where.id);
+            } else if (where.email) {
+                user = store.users.find((u: any) => u.email === where.email);
+            }
             return user || null;
+        },
+        findFirst: async ({ where }: any) => {
+            // Basic mock support for OR query
+            if (where.OR) {
+                for (const condition of where.OR) {
+                    if (condition.phone) {
+                        const match = store.users.find((u: any) => u.phone === condition.phone);
+                        if (match) return match;
+                    }
+                    if (condition.email) {
+                        const match = store.users.find((u: any) => u.email === condition.email);
+                        if (match) return match;
+                    }
+                }
+                return null;
+            }
+            return null;
         },
         create: async ({ data }: any) => {
             const newUser = { ...data, id: 'mock-user-' + Date.now() };

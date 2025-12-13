@@ -24,6 +24,15 @@ export class AuthService {
         return bcrypt.hash(otp, salt);
     }
 
+    public static async hashPassword(password: string): Promise<string> {
+        const salt = await bcrypt.genSalt(this.SALT_ROUNDS);
+        return bcrypt.hash(password, salt);
+    }
+
+    public static async comparePassword(password: string, hash: string): Promise<boolean> {
+        return bcrypt.compare(password, hash);
+    }
+
     public static async verifyOTP(otp: string, hash: string): Promise<boolean> {
         return bcrypt.compare(otp, hash);
     }
@@ -31,9 +40,24 @@ export class AuthService {
     /**
      * Generates a JWT token for the authenticated user.
      */
-    public static generateToken(userId: string): string {
-        // In a real app, use a proper secret from specific env var
+    /**
+     * Generates a short-lived Access Token (JWT).
+     */
+    public static generateToken(userId: string, role: string): string {
         const secret = process.env.JWT_SECRET || 'secret';
-        return jwt.sign({ userId }, secret, { expiresIn: '15m' }); // Fintech standard: Short lived
+        return jwt.sign({ userId, role }, secret, { expiresIn: '15m' }); // 15 mins
+    }
+
+    /**
+     * Generates a long-lived Refresh Token.
+     */
+    public static generateRefreshToken(userId: string): string {
+        const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'secret';
+        return jwt.sign({ userId, type: 'refresh' }, secret, { expiresIn: '7d' }); // 7 Days
+    }
+
+    public static verifyToken(token: string): any {
+        const secret = process.env.JWT_SECRET || 'secret';
+        return jwt.verify(token, secret);
     }
 }

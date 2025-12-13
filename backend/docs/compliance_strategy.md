@@ -11,5 +11,8 @@ Based on Groomsta Cybersecurity Guidelines v1.0
 * **Data Minimization:** Never store CVV or full card numbers.
 
 *3. API Security*
-* **Rate Limiting:** Global limit of 100 req/15min.
+*## 4. Rate Limiting (Prevention of Brute Force)
+- **Global API Limit**: 100 requests per 15 minutes per IP.
+- **Login/OTP Limit (Strict)**: 5 requests per 15 minutes per IP.
+- **Library**: `express-rate-limit`.
 * **Headers:** HSTS enabled, X-Frame-Options DENY.

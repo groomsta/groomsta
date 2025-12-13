@@ -38,7 +38,10 @@ app.get('/health', (req: Request, res: Response) => {
 
 // Routes
 import authRoutes from './modules/auth/auth.routes';
+import paymentRoutes from './modules/payment/payment.routes';
+
 app.use('/auth', authRoutes);
+app.use('/payments', paymentRoutes);
 
 // 6. Global Error Handler (Don't leak sensitive info)
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

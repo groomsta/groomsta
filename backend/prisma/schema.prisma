@@ -8,12 +8,21 @@ datasource db {
   url      = "postgresql://postgres:password@localhost:5432/groomsta?schema=public"
 }
 
+// Role Enum for RBAC
+enum Role {
+  CUSTOMER
+  PARTNER
+  ADMIN
+}
+
 // Users Table (Customers)
 model User {
   id              String    @id @default(uuid())
   phone           String    @unique @db.VarChar(15)
   email           String?   @unique @db.VarChar(255)
+  password        String?   // Hashed Password (Optional)
   full_name       String?   @db.VarChar(255)
+  role            Role      @default(CUSTOMER) // New Role Field
   profile_image   String?
   is_verified     Boolean   @default(false)
   is_active       Boolean   @default(true)
