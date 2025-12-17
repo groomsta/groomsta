@@ -60,4 +60,9 @@ export class AuthService {
         const secret = process.env.JWT_SECRET || 'secret';
         return jwt.verify(token, secret);
     }
+
+    public static verifyRefreshToken(token: string): any {
+        const secret = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'secret';
+        return jwt.verify(token, secret);
+    }
 }

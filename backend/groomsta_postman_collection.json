@@ -23,13 +23,13 @@
                             "raw": "{\n    \"phone\": \"9876543210\"\n}"
                         },
                         "url": {
-                            "raw": "{{baseUrl}}/auth/login",
+                            "raw": "{{baseUrl}}/auth/send-otp",
                             "host": [
                                 "{{baseUrl}}"
                             ],
                             "path": [
                                 "auth",
-                                "login"
+                                "send-otp"
                             ]
                         }
                     }

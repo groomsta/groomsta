@@ -1,4 +1,5 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
+import { AlertService } from './shared/alert.service';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -45,7 +46,13 @@ app.use('/payments', paymentRoutes);
 
 // 6. Global Error Handler (Don't leak sensitive info)
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack);
+    // Alert on 500 errors (Internal Server Error)
+    if (!err.status || err.status === 500) {
+        AlertService.sendCriticalAlert(err, `Request: ${req.method} ${req.url}`);
+    } else {
+        console.error(err.stack); // Just log other errors
+    }
+
     res.status(err.status || 500).json({
         success: false,
         message: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message

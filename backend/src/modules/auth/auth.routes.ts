@@ -15,12 +15,13 @@ const loginLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-router.post('/login', loginLimiter, validateRequest(loginSchema), handleLogin);
+// Phone OTP Flow (Step 1: Send OTP)
+router.post('/send-otp', loginLimiter, validateRequest(loginSchema), handleLogin);
 router.post('/verify-otp', loginLimiter, validateRequest(verifyOtpSchema), handleVerifyOTP);
 router.post('/refresh-token', validateRequest(refreshTokenSchema), handleRefreshToken);
 
-// Email/Password Routes
+// Email/Password Flow (Standard Login)
 router.post('/register', loginLimiter, validateRequest(registerSchema), handleRegister);
-router.post('/login/email', loginLimiter, validateRequest(emailLoginSchema), handleEmailLogin);
+router.post('/login', loginLimiter, validateRequest(emailLoginSchema), handleEmailLogin);
 
 export default router;

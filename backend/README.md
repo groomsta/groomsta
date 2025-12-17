@@ -12,15 +12,21 @@ A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, 
 
 ### 🔑 Authentication Module
 *   **OTP-Based Login**: Secure, passwordless authentication flow.
+*   **Email/Password Login**: Standard authentication with bcrypt hasing.
 *   **Cryptographic Strength**: Uses `crypto.randomBytes` for non-predictable OTP generation.
-*   **Secure Storage**: OTPs are hashed using `bcrypt` (12 salt rounds) before storage; never stored in plain text.
-*   **Session Management**: Issues **JWT (JSON Web Tokens)** upon successful verification for stateless, scalable sessions.
+*   **Secure Storage**: OTPs & Passwords are hashed using `bcrypt` (12 salt rounds).
+*   **Session Management**: Issues **JWT (Access & Refresh Tokens)** for secure, scalable sessions.
+
+### 💳 Payment Integration
+*   **Razorpay Support**: Backend controllers setup for creating orders and verifying payments.
+*   **Secure Transactions**: All payment requests are authenticated via JWT.
 
 ### 🛠️ Tech Stack
 *   **Runtime**: Node.js
 *   **Framework**: Express.js
 *   **Language**: TypeScript
 *   **Database**: PostgreSQL (via Prisma ORM)
+*   **Cache/Session**: Redis (with Auto-Failover)
 *   **Security**: Helmet, Bcrypt, JsonWebToken, Express-Rate-Limit
 
 ## 📂 Project Structure
@@ -28,13 +34,15 @@ A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, 
 ```bash
 src/
 ├── config/         # Environment and configuration setup
-├── modules/        # Feature-based modules (Auth, User, etc.)
-│   └── auth/       # Authentication Controller, Service, and Routes
-├── shared/         # Shared utilities (Prisma Client, etc.)
+├── modules/        # Feature-based modules (Auth, User, Payment)
+│   ├── auth/       # Authentication (OTP, Email, JWT)
+│   └── payment/    # Payment processing (Razorpay)
+├── shared/         # Shared utilities (Prisma Client, Redis Client)
 ├── middleware/     # Custom security middleware
-├── docs/           # Compliance and Security strategy documentation
-├── app.ts          # Express Application setup
-└── server.ts       # Server entry point
+├── apps.ts         # Express Application setup
+├── server.ts       # Server entry point
+└── scripts/        # Verification and Test scripts
+    └── test-all-systems.js # Master verification suite
 ```
 
 ## ⚡ Getting Started
@@ -42,7 +50,8 @@ src/
 ### Prerequisites
 *   Node.js (v16+)
 *   npm
-*   PostgreSQL (Optional for Dev, Mock DB supported)
+*   PostgreSQL
+*   Redis (Optional - App falls back to DB if missing)
 
 ### Installation
 
@@ -62,6 +71,7 @@ src/
     PORT=3000
     NODE_ENV=development
     DATABASE_URL="postgresql://user:password@localhost:5432/groomsta?schema=public"
+    REDIS_URL="redis://localhost:6379"
     JWT_SECRET="your-super-secret-key"
     ```
 
@@ -73,6 +83,13 @@ src/
     # Production Build
     npm run build
     npm start
+    ```
+
+5.  **Run Verification** (Optional)
+    To verify all systems (OTP, Email, Payments) are working correctly:
+    ```bash
+    # Ensure server is running in another terminal
+    node scripts/test-all-systems.js
     ```
 
 ## 🛡️ Compliance

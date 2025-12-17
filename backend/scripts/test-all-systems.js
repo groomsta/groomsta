@@ -7,15 +7,15 @@ async function testAll() {
     console.log('--- 1. Testing OTP Authentication ---');
     const phone = '9876543210';
 
-    // Login
-    console.log('POST /auth/login (Phone)');
-    const loginRes = await fetch(`${baseUrl}/auth/login`, {
+    // Login (Send OTP)
+    console.log('POST /auth/send-otp (Phone)');
+    const loginRes = await fetch(`${baseUrl}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone })
     });
     const loginData = await loginRes.json();
-    if (!loginData.success) throw new Error('OTP Login Failed');
+    if (!loginData.success) throw new Error('OTP Send Failed');
     console.log('✅ OTP Sent. OTP:', loginData.otp);
 
     // Verify
@@ -58,20 +58,40 @@ async function testAll() {
     console.log('✅ User Registered.');
 
     // Email Login
-    console.log('POST /auth/login/email');
-    const emailLoginRes = await fetch(`${baseUrl}/auth/login/email`, {
+    console.log('POST /auth/login');
+    const emailLoginRes = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
     });
     const emailLoginData = await emailLoginRes.json();
     if (!emailLoginData.success) throw new Error('Email Login Failed');
-    console.log('✅ Email Login Success.');
+
+    // Check for MFA requirement
+    if (emailLoginData.require2fa) {
+        console.log('✅ Email Credentials Valid. MFA Required.');
+        console.log('ℹ️ MFA OTP:', emailLoginData.otp); // Will exist in Dev
+
+        // Verify MFA OTP
+        console.log('POST /auth/verify-otp (MFA Step)');
+        const mfaRes = await fetch(`${baseUrl}/auth/verify-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: uniquePhone, otp: emailLoginData.otp })
+        });
+        const mfaData = await mfaRes.json();
+        if (!mfaData.success) throw new Error('MFA Verification Failed');
+
+        console.log('✅ MFA Verified. Logged in successfully.');
+        emailLoginData.accessToken = mfaData.accessToken; // Store token for next steps
+    } else {
+        console.log('✅ Email Login Success (No MFA).');
+    }
 
     // --- Part 3: Payments (Mock) ---
     console.log('\n--- 3. Testing Payment Integration ---');
     console.log('POST /payments/create-order');
-    // Using the token from Email Login to authenticate
+    // Using the token from Email Login (after MFA) to authenticate
     const payRes = await fetch(`${baseUrl}/payments/create-order`, {
         method: 'POST',
         headers: {
