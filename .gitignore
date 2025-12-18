@@ -17,4 +17,7 @@ yarn-error.log*
 
 # OS
 .DS_Store
-Thumbs.db
+
+# Test Artifacts
+*.txt
+*_result.txt
