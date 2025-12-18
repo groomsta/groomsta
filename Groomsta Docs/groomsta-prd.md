@@ -1,0 +1,329 @@
+# Groomsta – Product Requirements Document
+
+# (PRD)
+
+## 1. Overview
+
+Groomsta is a hybrid **home grooming + partner salon booking** platform designed for customers across
+Delhi NCR. It lets customers book home grooming services or visit partner salons, while allowing grooming
+professionals and salons to accept jobs and manage earnings via the same web interface.
+
+This PRD documents all features required for **Version 1.0** , focusing on simplicity, scalability, and a premium
+user experience.
+
+## 2. Product Goals
+
+```
+Deliver the smoothest booking experience for grooming services (home + salon).
+Provide partners with a fast, reliable job acceptance system.
+Build a dynamic pricing ecosystem with partner-specific rates.
+Enable efficient weekly payouts and seamless onboarding.
+Establish Groomsta as a trusted, premium service brand.
+```
+## 3. Target Users
+
+### 3.1 Customers
+
+```
+Primary users booking home grooming services or salon services.
+Want convenience, trust, transparent pricing, and reliable professionals.
+```
+### 3.2 Partners (Groomers / Salons)
+
+```
+Individuals or salons wanting to offer services through Groomsta.
+Want a stable flow of jobs, transparent earnings, and easy onboarding.
+```
+## 4. Key Product Components
+
+```
+Unified Login Interface – Customer or Partner login.
+Customer Web App – Service browsing, booking, payments, tracking.
+Partner Web App – Job acceptance, service management, earnings.
+Admin Backend (Internal) – Service configuration, partners, payouts.
+Notifications Engine – SMS, WhatsApp, email, push notifications.
+Payments & Wallet System – Online payments, credits, referral rewards.
+```
+#### • • • • • • • • •
+
+#### 1.
+
+#### 2.
+
+#### 3.
+
+#### 4.
+
+#### 5.
+
+#### 6.
+
+
+## 5. Customer Experience (CX)
+
+### 5.1 Home Screen
+
+```
+Simple hero section with options:
+Home Services
+Salon Services
+Optional: service search bar.
+```
+### 5.2 Guest Booking
+
+```
+Customers can place bookings without creating an account.
+OTP verification required during checkout.
+```
+### 5.3 Service Browsing
+
+Services organized as: - **Categories → Subcategories → Services** - Variants based on gender/location when
+applicable.
+
+### 5.4 Service Details Page
+
+```
+Description, duration, partner price range, customer reviews.
+Add-ons and bundled packages.
+```
+### 5.5 Location & Address
+
+```
+Pincode serviceability check.
+Address input OR Google Maps location picker.
+```
+### 5.6 Booking Flow
+
+```
+Customer selects:
+Date
+Time window (preferred)
+Booking request sent to nearby partners.
+First partner to accept gets the job.
+```
+### 5.7 Payments
+
+Options: - Online full payment - Online partial + post-service - Pay after service
+
+### 5.8 Order Tracking
+
+```
+Real-time updates (accepted, on the way, started, completed).
+Optional map tracking in future.
+```
+#### • • • • • • • • • • • • • • • • •
+
+
+### 5.9 Referrals & Membership
+
+```
+Referral: ₹100 to both parties.
+Membership plan (to be optimized): flat monthly discount, priority support.
+```
+## 6. Partner Experience (PX)
+
+### 6.1 Partner Login
+
+```
+Mobile/email login.
+Separate Partner UI.
+```
+### 6.2 Partner Onboarding
+
+```
+Personal details
+KYC (ID proof, photo)
+Experience & skills
+Bank details
+Salon onboarding if applicable
+Services offered + pricing flexibility
+```
+### 6.3 Job Requests
+
+```
+Requests pushed to all nearby partners.
+Accept or Reject.
+Request auto-expires in 20 seconds.
+```
+### 6.4 Partner Dashboard
+
+Sections: - **Jobs** (Incoming, Active, Past) - **Earnings** (Weekly payouts, history) - **Services** (Set pricing within
+range) - **Availability** (Work hours) - **Profile**
+
+### 6.5 Pricing Controls
+
+Partners can: - Increase/decrease base price within allowed range - Add custom add-on fees (pre-approved)
+
+### 6.6 Payout Logic
+
+```
+Weekly automated payouts.
+Commission deducted before payout.
+```
+## 7. Authentication System
+
+```
+OTP login via phone
+Email + password optional
+```
+#### • • • • • • • • • • • • • • • • •
+
+
+```
+Customers and partners have separate accounts
+Admin access controlled separately
+```
+## 8. Dynamic Pricing Engine
+
+```
+Groomsta sets base prices per service.
+Partners choose their pricing within a ± range.
+Surge pricing triggers during:
+High demand
+Low partner supply
+```
+Customer sees: - Price range OR the exact partner price once job is accepted.
+
+## 9. Payments & Wallet
+
+```
+Razorpay integration
+User wallet stores:
+Referral credits
+Membership discounts
+Refunds
+```
+## 10. Notification System
+
+```
+SMS for OTP + urgent alerts
+WhatsApp confirmations + updates
+Email for invoices
+Push notifications for partners (later in mobile app)
+```
+## 11. Admin Dashboard
+
+Minimal V1 features: - Manage services & pricing - Manage partners (verify, suspend, edit) - Customer
+bookings - Payout processing + reports - Coupons, referrals, memberships - Partner performance metrics
+
+## 12. Technical Architecture
+
+### Frontend
+
+```
+React (or Next.js for SSR + SEO)
+Responsive PWA experience
+```
+#### •
+
+#### •
+
+#### 1.
+
+#### 2.
+
+#### 3.
+
+#### 4.
+
+#### 5.
+
+#### • • • • • • • • • • •
+
+
+### Backend
+
+```
+Node.js / Express or Next.js API
+Real-time push using Firebase or Socket.io
+```
+### Database
+
+```
+PostgreSQL (primary)
+Redis (real-time + caching)
+```
+### Storage
+
+```
+AWS S3 or Supabase Storage
+```
+## 13. Database Schema (High Level)
+
+**Tables:** - Users - Partners - Partner_Documents - Services - Service_Categories - Service_Subcategories -
+Partner_Services - Bookings - Booking_Requests - Payments - Payouts - Wallet - Notifications - Reviews -
+Coupons - Memberships - Locations
+
+## 14. Success Metrics
+
+### Customer Metrics
+
+```
+Conversion rate from homepage → booking
+Repeat bookings per month
+Referral usage rate
+```
+### Partner Metrics
+
+```
+Partner activation rate
+Acceptance rate on jobs
+Weekly earnings growth
+```
+### Business Metrics
+
+#### GMV
+
+```
+Commission margin
+Operational efficiency
+```
+## 15. Risks
+
+```
+Partner reliability variations
+Fraud bookings
+```
+#### • • • • • • • • • • • • • • • •
+
+
+```
+Payment failures
+Delays during peak hours
+```
+Mitigation: ratings, advance payments, buffer times.
+
+## 16. Phase-wise Roadmap
+
+### Phase 1: MVP
+
+```
+Core booking flow
+Partner acceptance system
+OTP login
+Payout system
+Admin dashboard
+```
+### Phase 2: Experience Upgrade
+
+```
+Referral system
+Membership system
+Partner maps
+Ratings & reviews
+PWA optimizations
+```
+### Phase 3: Scale
+
+```
+Full mobile apps (React Native)
+AI-based partner assignment
+Salon marketplace expansion
+```
+### This PRD will be continuously updated as we finalize decisions and start UI
+
+### wireframing.
+
+#### • • • • • • • • • • • • • • •
+
+
