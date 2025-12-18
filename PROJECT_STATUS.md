@@ -12,70 +12,80 @@ The project is a modern web application built with the following technologies, v
     *   Utilities: `clsx`, `tailwind-merge`, `class-variance-authority`
     *   Animations: `tailwindcss-animate`
 *   **Icons**: `lucide-react`, `react-icons`
+*   **State & Validation**: `zustand`, `react-hook-form`, `zod`
+*   **Backend Integration**: `axios`, `@tanstack/react-query`, `@supabase/supabase-js`, `prisma`
 
 ## 2. Implemented Application Flow
 
-The application currently focuses on the **Customer Journey**, from landing on the site to tracking a service.
+The application focuses on the **Customer Journey** at the root, with separate portals for Partners and Admins.
 
-### 2.1 Landing Page
-**Entry Point**: [`app/(customer)/page.tsx`](app/(customer)/page.tsx)
+### 2.1 Landing Page (Customer)
+**Entry Point**: [`src/app/(customer)/page.tsx`](src/app/(customer)/page.tsx) (Serves as the root `/` page)
 
 The landing page is fully componentized and includes the following sections to convert visitors:
-*   **Hero Section**: [`app/components/landingpage/Hero.tsx`](app/components/landingpage/Hero.tsx)
-*   **Serviceability**: [`app/components/landingpage/ServiceabilityCheck.tsx`](app/components/landingpage/ServiceabilityCheck.tsx)
-*   **Categories**: [`app/components/landingpage/PopularCategories.tsx`](app/components/landingpage/PopularCategories.tsx)
-*   **Service Modes**: [`app/components/landingpage/ServiceModes.tsx`](app/components/landingpage/ServiceModes.tsx)
-*   **Value Props**: [`app/components/landingpage/WhyChooseUs.tsx`](app/components/landingpage/WhyChooseUs.tsx)
-*   **Reviews**: [`app/components/landingpage/Reviews.tsx`](app/components/landingpage/Reviews.tsx)
-*   **CTA**: [`app/components/landingpage/CTABanner.tsx`](app/components/landingpage/CTABanner.tsx)
+*   **Hero Section**: [`src/app/components/landingpage/Hero.tsx`](src/app/components/landingpage/Hero.tsx)
+*   **Serviceability**: [`src/app/components/landingpage/ServiceabilityCheck.tsx`](src/app/components/landingpage/ServiceabilityCheck.tsx)
+*   **Categories**: [`src/app/components/landingpage/PopularCategories.tsx`](src/app/components/landingpage/PopularCategories.tsx)
+*   **Service Modes**: [`src/app/components/landingpage/ServiceModes.tsx`](src/app/components/landingpage/ServiceModes.tsx)
+*   **Value Props**: [`src/app/components/landingpage/WhyChooseUs.tsx`](src/app/components/landingpage/WhyChooseUs.tsx)
+*   **Reviews**: [`src/app/components/landingpage/Reviews.tsx`](src/app/components/landingpage/Reviews.tsx)
+*   **CTA**: [`src/app/components/landingpage/CTABanner.tsx`](src/app/components/landingpage/CTABanner.tsx)
 
 ### 2.2 Service Discovery
 **Routes**:
-*   **Home Services**: [`app/(customer)/services/home/page.tsx`](app/(customer)/services/home/page.tsx)
-*   **Category Details**: [`app/(customer)/services/home/[category]/page.tsx`](app/(customer)/services/home/%5Bcategory%5D/page.tsx) (Dynamic Route)
+*   **Home Services**: [`src/app/(customer)/services/home/page.tsx`](src/app/(customer)/services/home/page.tsx)
+*   **Category Details**: [`src/app/(customer)/services/home/[category]/page.tsx`](src/app/(customer)/services/home/%5Bcategory%5D/page.tsx) (Dynamic Route)
 
 Uses shared components to display service cards and categories.
 
 ### 2.3 Booking Flow
-**Entry Point**: [`app/(customer)/booking/page.tsx`](app/(customer)/booking/page.tsx)
+**Entry Point**: [`src/app/(customer)/booking/page.tsx`](src/app/(customer)/booking/page.tsx)
 
 The booking process is orchestrated by a wizard component that manages the steps:
-*   **Wizard Controller**: [`app/components/booking/BookingWizard.tsx`](app/components/booking/BookingWizard.tsx)
+*   **Wizard Controller**: [`src/app/components/booking/BookingWizard.tsx`](src/app/components/booking/BookingWizard.tsx)
 
 **Steps**:
-1.  **Address Selection**: [`app/components/booking/AddressSelector.tsx`](app/components/booking/AddressSelector.tsx) - Allows users to pick or enter an address.
-2.  **Date & Time**: [`app/components/booking/DateTimePicker.tsx`](app/components/booking/DateTimePicker.tsx) - For scheduling the service.
-3.  **Review & Payment**: [`app/components/booking/BookingSummary.tsx`](app/components/booking/BookingSummary.tsx) - Final review and simulated payment.
+1.  **Address Selection**: [`src/app/components/booking/AddressSelector.tsx`](src/app/components/booking/AddressSelector.tsx)
+2.  **Date & Time**: [`src/app/components/booking/DateTimePicker.tsx`](src/app/components/booking/DateTimePicker.tsx)
+3.  **Review & Payment**: [`src/app/components/booking/BookingSummary.tsx`](src/app/components/booking/BookingSummary.tsx)
 
 ### 2.4 Salon Services
-**Entry Point**: [`app/(customer)/services/salon/page.tsx`](app/(customer)/services/salon/page.tsx)
+**Entry Point**: [`src/app/(customer)/services/salon/page.tsx`](src/app/(customer)/services/salon/page.tsx)
 
 A functional dashboard for discovering salon partners:
-*   **Hero with Search**: [`app/components/salon/SalonHero.tsx`](app/components/salon/SalonHero.tsx)
-*   **Categories**: [`app/components/salon/SalonCategories.tsx`](app/components/salon/SalonCategories.tsx)
-*   **Featured Salons**: [`app/components/salon/FeaturedSalons.tsx`](app/components/salon/FeaturedSalons.tsx)
+*   **Hero with Search**: [`src/app/components/salon/SalonHero.tsx`](src/app/components/salon/SalonHero.tsx)
+*   **Categories**: [`src/app/components/salon/SalonCategories.tsx`](src/app/components/salon/SalonCategories.tsx)
+*   **Featured Salons**: [`src/app/components/salon/FeaturedSalons.tsx`](src/app/components/salon/FeaturedSalons.tsx)
 
 ### 2.5 Order Tracking
-**Entry Point**: [`app/(customer)/track/page.tsx`](app/(customer)/track/page.tsx)
+**Entry Point**: [`src/app/(customer)/track/page.tsx`](src/app/(customer)/track/page.tsx)
 
 After booking, the user is redirected to the tracking page which features:
-*   **Timeline Tracker**: [`app/components/tracking/OrderTracker.tsx`](app/components/tracking/OrderTracker.tsx) - Shows current status (e.g., "On the way").
-*   **Partner Details**: [`app/components/tracking/PartnerCard.tsx`](app/components/tracking/PartnerCard.tsx) - Info about the assigned service provider.
-*   **Live Map**: [`app/components/tracking/LiveStatusMap.tsx`](app/components/tracking/LiveStatusMap.tsx) - Visualizes location (mocked/integrated).
+*   **Timeline Tracker**: [`src/app/components/tracking/OrderTracker.tsx`](src/app/components/tracking/OrderTracker.tsx)
+*   **Partner Details**: [`src/app/components/tracking/PartnerCard.tsx`](src/app/components/tracking/PartnerCard.tsx)
+*   **Live Map**: [`src/app/components/tracking/LiveStatusMap.tsx`](src/app/components/tracking/LiveStatusMap.tsx)
 
 ### 2.6 Authentication
-**Entry Point**: [`app/auth/login/page.tsx`](app/auth/login/page.tsx)
+**Entry Point**: [`src/app/auth/login/page.tsx`](src/app/auth/login/page.tsx)
+*   **Components**: Located in `src/app/components/auth/` (Login forms, OTP simulation).
 
-*   **Components**: Located in `app/components/auth/` (Login forms, OTP simulation).
+### 2.7 Partner & Admin Portal
+**Entry Point**: [`src/app/portal/page.tsx`](src/app/portal/page.tsx)
+*   Serves as a gateway to:
+    *   **Partner Registration**: `/partner/register`
+    *   **Admin Dashboard**: `/admin/verifications/pending`
 
 ## 3. Project Structure
 
 ### Key Directories
-*   **`app/`**: Contains the Next.js App Router file-system based routing.
-    *   `app/(customer)`: Grouped routes for customer-facing pages.
-    *   `app/components`: Application-specific UI components, organized by feature (`booking`, `landingpage`, `tracking`, etc.).
-*   **`components/ui/`**: Reusable generic UI components (likely from shadcn/ui).
-*   **`Groomsta Docs/`**: Comprehensive project documentation including PRDs, App Flow, and Engineering Plans.
+*   **`src/app/`**: Contains the Next.js App Router file-system based routing.
+    *   `src/app/(customer)`: Grouped routes for customer-facing pages (Landing, Services, Booking).
+    *   `src/app/components`: Application-specific UI components, organized by feature.
+    *   `src/app/portal`: Gateway for internal/partner users.
+    *   `src/app/admin`: Admin dashboard routes.
+    *   `src/app/partner`: Partner onboarding and profiles.
+*   **`src/components/ui/`**: Reusable generic UI components (shadcn/ui), properly aliased.
+*   **`Groomsta Docs/`**: Comprehensive project documentation.
 
 ### Documentation Files
 *   **Frontend Architecture**: [`Groomsta Docs/frontend.md`](Groomsta%20Docs/frontend.md)
