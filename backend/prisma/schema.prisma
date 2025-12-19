@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:password@localhost:5432/groomsta?schema=public"
 }
 
 // Role Enum for RBAC
@@ -61,9 +60,52 @@ model UserSession {
   user    User?    @relation(fields: [user_id], references: [id])
 }
 
-// Placeholder to prevent errors
+// Wallet System
 model Wallet {
-  id      String @id @default(uuid())
-  user_id String @unique
-  user    User   @relation(fields: [user_id], references: [id])
+  id           String              @id @default(uuid())
+  user_id      String              @unique
+  user         User                @relation(fields: [user_id], references: [id])
+  balance      Decimal             @default(0.00) @db.Decimal(10, 2)
+  currency     String              @default("INR")
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id           String          @id @default(uuid())
+  wallet_id    String
+  wallet       Wallet          @relation(fields: [wallet_id], references: [id])
+  amount       Decimal         @db.Decimal(10, 2)
+  type         TransactionType
+  description  String?
+  reference_id String? // e.g. Payment ID or Referral ID
+  created_at   DateTime        @default(now())
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+// Payment Logging & Reconciliation
+model Payment {
+  id                  String        @id @default(uuid())
+  user_id             String
+  amount              Decimal       @db.Decimal(10, 2)
+  currency            String        @default("INR")
+  status              PaymentStatus @default(PENDING)
+  provider            String        @default("RAZORPAY")
+  razorpay_order_id   String?       @unique
+  razorpay_payment_id String?       @unique
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
 }

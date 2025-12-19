@@ -41,8 +41,12 @@ app.get('/health', (req: Request, res: Response) => {
 import authRoutes from './modules/auth/auth.routes';
 import paymentRoutes from './modules/payment/payment.routes';
 
+import walletRoutes from './modules/wallet/wallet.routes';
+
 app.use('/auth', authRoutes);
 app.use('/payments', paymentRoutes);
+app.use('/api/wallet', walletRoutes); // Follows the new spec /api/wallet
+
 
 // 6. Global Error Handler (Don't leak sensitive info)
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

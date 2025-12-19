@@ -55,4 +55,25 @@ export class PaymentService {
 
         return expectedSignature === signature;
     }
+
+    /**
+     * Initiates a refund for a payment.
+     * @param paymentId razorpay_payment_id
+     * @param amount Amount to refund in standard currency (INR). If null, full refund.
+     */
+    public static async refundPayment(paymentId: string, amount?: number): Promise<any> {
+        try {
+            const options: any = {};
+            if (amount) {
+                options.amount = amount * 100; // Convert to paise
+            }
+
+            // @ts-ignore: Razorpay types might be partial in dev environment
+            const refund = await this.getClient().payments.refund(paymentId, options);
+            return refund;
+        } catch (error) {
+            console.error('Razorpay Refund Error:', error);
+            throw new Error('Refund failed');
+        }
+    }
 }
