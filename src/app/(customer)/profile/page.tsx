@@ -5,7 +5,10 @@ import ProfileSidebar from '@/app/components/profile/ProfileSidebar';
 import BookingHistory from '@/app/components/profile/BookingHistory';
 import ProfileDetails from '@/app/components/profile/ProfileDetails';
 import SavedAddresses from '@/app/components/profile/SavedAddresses';
-import { CreditCard, Bell } from 'lucide-react';
+import WalletSection from '@/app/components/profile/WalletSection';
+import MembershipSection from '@/app/components/profile/MembershipSection';
+import ReferralSection from '@/app/components/profile/ReferralSection';
+import { Bell } from 'lucide-react';
 
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState('profile');
@@ -18,15 +21,17 @@ export default function ProfilePage() {
                 return <BookingHistory />;
             case 'addresses':
                 return <SavedAddresses />;
+            case 'wallet':
+                return <WalletSection />;
+            case 'membership':
+                return <MembershipSection />;
+            case 'referrals':
+                return <ReferralSection />;
             default:
-                // Placeholder for Wallet and Notifications
+                // Placeholder for Notifications
                 return (
                     <div className="flex flex-col items-center justify-center min-h-[300px] text-gray-400 animate-in fade-in">
-                        {activeTab === 'wallet' ? (
-                            <CreditCard className="w-16 h-16 mb-4 opacity-20" />
-                        ) : (
-                            <Bell className="w-16 h-16 mb-4 opacity-20" />
-                        )}
+                        <Bell className="w-16 h-16 mb-4 opacity-20" />
                         <h3 className="font-bold text-lg text-gray-500">Coming Soon</h3>
                         <p className="text-sm">This feature is under development.</p>
                     </div>

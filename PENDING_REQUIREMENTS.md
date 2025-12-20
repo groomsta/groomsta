@@ -33,3 +33,14 @@ This document lists all the pending items, backend integration points, and dynam
 
 ## 6. Salon Services
 - [ ] **Salon Listing:** Needs a separate flow/API similar to Home Services but filtering by "Salon" type.
+
+## 7. Loyalty, Wallet & Referrals (New)
+- [ ] **Wallet API:**
+    - `GET /api/user/wallet/balance`
+    - `GET /api/user/wallet/transactions`
+- [ ] **Membership API:**
+    - `GET /api/user/membership` (Current status)
+    - `GET /api/membership/plans` (Available plans)
+- [ ] **Referral API:**
+    - `GET /api/user/referral` (Code, Stats, Earnings)
+    - `POST /api/user/referral/claim` (If manual claim needed)

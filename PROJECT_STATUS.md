@@ -75,6 +75,12 @@ After booking, the user is redirected to the tracking page which features:
     *   **Partner Registration**: `/partner/register`
     *   **Admin Dashboard**: `/admin/verifications/pending`
 
+### 2.8 User Dashboard
+**Entry Point**: [`src/app/(customer)/profile/page.tsx`](src/app/(customer)/profile/page.tsx)
+*   **Wallet**: [`src/app/components/profile/WalletSection.tsx`](src/app/components/profile/WalletSection.tsx) (Balance & Actions)
+*   **Membership**: [`src/app/components/profile/MembershipSection.tsx`](src/app/components/profile/MembershipSection.tsx) (Plans & Upgrade)
+*   **Referrals**: [`src/app/components/profile/ReferralSection.tsx`](src/app/components/profile/ReferralSection.tsx) (Codes & Stats)
+
 ## 3. Project Structure
 
 ### Key Directories
