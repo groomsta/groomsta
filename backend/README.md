@@ -1,96 +1,105 @@
 # Groomsta Backend 🛡️
 
-A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, Express, and TypeScript. This repository implements a robust authentication system complying with strict cybersecurity guidelines.
+A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, Express, and TypeScript. This repository implements a robust system handling Payments, Wallets, Payouts, and Referrals.
 
 ## 🚀 Key Features
 
 ### 🔐 Security First ("Fort Knox" Architecture)
-*   **Secure Headers**: Implemented using `helmet` to protect against common vulnerabilities.
-*   **Rate Limiting**: Global limiter (100 requests per 15 mins) configured to prevent DDoS and Brute Force attacks.
-*   **CORS Policy**: Restrictive Cross-Origin Resource Sharing settings.
-*   **Data Minimization**: Adheres to a strict "Zero Trust" policy for sensitive data.
+*   **Secure Headers**: Implemented using `helmet`.
+*   **Rate Limiting**: Global limiter (100 requests per 15 mins).
+*   **CORS Policy**: Strict Origin and Credentials settings.
+*   **Authentication**:
+    *   **OTP-Based Login**: Passwordless flow via SMS.
+    *   **MFA-Ready**: Architecture supports 2FA enforcement.
+    *   **JWT Sessions**: Secure Access & Refresh Token rotation.
 
-### 🔑 Authentication Module
-*   **OTP-Based Login**: Secure, passwordless authentication flow.
-*   **Email/Password Login**: Standard authentication with bcrypt hasing.
-*   **Cryptographic Strength**: Uses `crypto.randomBytes` for non-predictable OTP generation.
-*   **Secure Storage**: OTPs & Passwords are hashed using `bcrypt` (12 salt rounds).
-*   **Session Management**: Issues **JWT (Access & Refresh Tokens)** for secure, scalable sessions.
+### � Payment System (Advanced)
+*   **Provider**: Razorpay Integration.
+*   **Booking Advance**: Logic to accept **Partial Payments** (e.g., 20% advance).
+*   **Full Payments**: Standard full amount checkout.
+*   **Refunds**: Automated refund processing via API (Partial & Full).
+*   **Webhooks**: Real-time status updates (`payment.captured`, `refund.processed`) verified with HMAC SHA256 signatures.
 
-### 💳 Payment Integration
-*   **Razorpay Support**: Backend controllers setup for creating orders and verifying payments.
-*   **Secure Transactions**: All payment requests are authenticated via JWT.
+### 💰 Wallet System
+*   **Internal Ledger**: Users can hold credits (Prepaid/Rewards).
+*   **Transactions**:
+    *   `Top-up`: Add money to wallet.
+    *   `Deduct`: Pay for services using wallet balance.
+*   **Audit Trail**: Immutable history of `CREDIT` and `DEBIT` transactions.
 
-### 🛠️ Tech Stack
-*   **Runtime**: Node.js
-*   **Framework**: Express.js
-*   **Language**: TypeScript
-*   **Database**: PostgreSQL (via Prisma ORM)
-*   **Cache/Session**: Redis (with Auto-Failover)
-*   **Security**: Helmet, Bcrypt, JsonWebToken, Express-Rate-Limit
+### � Payout System (Partner Earnings)
+*   **Weekly Cycle**: Automated calculation of partner earnings.
+*   **Commission**: Built-in logic to deduct platform fees (Default: 20%).
+*   **Transfers**: Integration with **Razorpay Route/X** for direct bank transfers.
+*   **Admin Tools**: Endpoints to calculate, initiate, and verify payouts.
 
-## 📂 Project Structure
+### 🎁 Referral System
+*   **viral Growth**: Unique referral code generation (e.g., `HAMM1234`).
+*   **Instant Rewards**: Triggers **₹100 Wallet Credit** for both Referrer and Referee upon successful signup/usage.
+*   **Stats**: Track total referrals and earnings.
 
+---
+
+## 📂 API Reference
+
+### Authentication
+*   `POST /auth/send-otp` - Request Login OTP
+*   `POST /auth/verify-otp` - Verify & Get Token
+*   `POST /auth/refresh-token` - Renew Session
+
+### Payments
+*   `POST /api/payments/create-order` - Initialize Checkout (Supports partial)
+*   `POST /api/payments/verify` - Confirm Payment Success
+*   `POST /api/payments/refund` - Initiate Refund
+
+### Wallet
+*   `GET /api/wallet/balance` - View Cash & History
+*   `POST /api/wallet/add-credits` - Load Money
+*   `POST /api/wallet/deduct` - Spend Money
+
+### Payouts (Partners)
+*   `GET /api/payouts/my-payouts` - View Earning History
+*   `POST /api/payouts/initiate` - [Admin] Trigger Bank Transfer
+
+### Referrals
+*   `POST /api/referrals/generate` - Get My Code
+*   `POST /api/referrals/apply` - Apply a Code
+*   `GET /api/referrals/stats` - View Performance
+
+---
+
+## ⚡ Setup & Activation
+
+### 1. Installation
 ```bash
-src/
-├── config/         # Environment and configuration setup
-├── modules/        # Feature-based modules (Auth, User, Payment)
-│   ├── auth/       # Authentication (OTP, Email, JWT)
-│   └── payment/    # Payment processing (Razorpay)
-├── shared/         # Shared utilities (Prisma Client, Redis Client)
-├── middleware/     # Custom security middleware
-├── apps.ts         # Express Application setup
-├── server.ts       # Server entry point
-└── scripts/        # Verification and Test scripts
-    └── test-all-systems.js # Master verification suite
+cd backend
+npm install
 ```
 
-## ⚡ Getting Started
+### 2. Environment Variables (.env)
+Create a `.env` file with these keys:
+```env
+PORT=5000
+DATABASE_URL="postgresql://user:password@localhost:5432/groomsta?schema=public"
+JWT_SECRET="secret"
+RAZORPAY_KEY_ID="rzp_test_..."
+RAZORPAY_KEY_SECRET="secret"
+RAZORPAY_WEBHOOK_SECRET="secret"
+```
 
-### Prerequisites
-*   Node.js (v16+)
-*   npm
-*   PostgreSQL
-*   Redis (Optional - App falls back to DB if missing)
+### 3. Database Activation (IMPORTANT)
+The Payout & Referral tables need to be created in your database.
+Once you have your PostgreSQL credentials:
+```bash
+npx prisma db push
+```
 
-### Installation
+### 4. Run Server
+```bash
+npm run dev
+# Server starts at http://localhost:5000
+```
 
-1.  **Navigate to directory**
-    ```bash
-    cd backend
-    ```
-
-2.  **Install Dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Environment Setup**
-    Create a `.env` file in the `backend` directory:
-    ```env
-    PORT=3000
-    NODE_ENV=development
-    DATABASE_URL="postgresql://user:password@localhost:5432/groomsta?schema=public"
-    REDIS_URL="redis://localhost:6379"
-    JWT_SECRET="your-super-secret-key"
-    ```
-
-4.  **Run the Server**
-    ```bash
-    # Development Mode
-    npm run dev
-
-    # Production Build
-    npm run build
-    npm start
-    ```
-
-5.  **Run Verification** (Optional)
-    To verify all systems (OTP, Email, Payments) are working correctly:
-    ```bash
-    # Ensure server is running in another terminal
-    node scripts/test-all-systems.js
-    ```
-
-## 🛡️ Compliance
-See [docs/compliance_strategy.md](docs/compliance_strategy.md) for details on our Cybersecurity and Payment Security protocols.
+## 🛡️ Documentation
+*   [Compliance Strategy](docs/compliance_strategy.md)
+*   [Payment & Webhook Guide](payment_webhook_guide.md)

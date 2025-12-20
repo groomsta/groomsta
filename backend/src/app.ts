@@ -37,15 +37,29 @@ app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'active', timestamp: new Date() });
 });
 
+// Root Endpoint (Welcome Message)
+app.get('/', (req: Request, res: Response) => {
+    res.status(200).json({
+        message: 'Welcome to Groomsta Backend API',
+        environment: process.env.NODE_ENV,
+        health_check: '/health',
+        documentation: '/docs' // Placeholder
+    });
+});
+
 // Routes
 import authRoutes from './modules/auth/auth.routes';
 import paymentRoutes from './modules/payment/payment.routes';
 
 import walletRoutes from './modules/wallet/wallet.routes';
+import payoutRoutes from './modules/payout/payout.routes';
+import referralRoutes from './modules/referral/referral.routes';
 
 app.use('/auth', authRoutes);
-app.use('/payments', paymentRoutes);
-app.use('/api/wallet', walletRoutes); // Follows the new spec /api/wallet
+app.use('/api/payments', paymentRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/payouts', payoutRoutes);
+app.use('/api/referrals', referralRoutes);
 
 
 // 6. Global Error Handler (Don't leak sensitive info)

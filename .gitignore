@@ -21,3 +21,21 @@ yarn-error.log*
 # Test Artifacts
 *.txt
 *_result.txt
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+/src/generated/prisma
+
+# Documentation
+*.pdf
+*.docx
+
+# Temporary Scripts
+reproduce_error.js
+
+.next/

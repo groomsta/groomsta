@@ -29,8 +29,57 @@ model User {
   updated_at      DateTime  @updatedAt
   
   // Relations
+  // Relations
   sessions        UserSession[]
   wallet          Wallet?
+  payouts         Payout[]
+  referralsMade   Referral[] @relation("ReferralsMade")
+  referralReceived Referral? @relation("ReferralsReceived")
+  
+  referral_code   String?   @unique @db.VarChar(20)
+}
+
+// ... (Existing OTP, Session, Wallet models remain same) ...
+
+// Payout System (Dev 1)
+model Payout {
+  id              String       @id @default(uuid())
+  partner_id      String
+  partner         User         @relation(fields: [partner_id], references: [id])
+  amount          Decimal      @db.Decimal(10, 2)
+  currency        String       @default("INR")
+  status          PayoutStatus @default(PENDING)
+  razorpay_fund_account_id String? // Link to Razorpay Bank Account
+  razorpay_payout_id       String? // The actual transfer ID
+  cycle_start     DateTime
+  cycle_end       DateTime
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Referral System (Dev 1)
+model Referral {
+  id              String         @id @default(uuid())
+  referrer_id     String
+  referrer        User           @relation("ReferralsMade", fields: [referrer_id], references: [id])
+  referee_id      String         @unique // One person can only be referred once
+  referee         User           @relation("ReferralsReceived", fields: [referee_id], references: [id])
+  status          ReferralStatus @default(PENDING)
+  reward_amount   Decimal        @default(100.00) @db.Decimal(10, 2)
+  created_at      DateTime       @default(now())
+  completed_at    DateTime?
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
 }
 
 // OTP Verification (Crucial for Auth)
