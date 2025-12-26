@@ -23,9 +23,9 @@ export class WalletService {
     }
 
     // Add Credits
-    public static async addCredits(userId: string, amount: number, description: string, referenceId?: string) {
-        // Transaction to ensure atomicity
-        return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    public static async addCredits(userId: string, amount: number, description: string, referenceId?: string, externalTx?: Prisma.TransactionClient) {
+
+        const execute = async (tx: Prisma.TransactionClient) => {
             const wallet = await tx.wallet.findUnique({ where: { user_id: userId } });
             if (!wallet) throw new Error('Wallet not found');
 
@@ -47,12 +47,19 @@ export class WalletService {
             });
 
             return newBalance;
-        });
+        };
+
+        if (externalTx) {
+            return execute(externalTx);
+        } else {
+            return await prisma.$transaction(execute);
+        }
     }
 
     // Deduct
-    public static async deductCredits(userId: string, amount: number, description: string, referenceId?: string) {
-        return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    public static async deductCredits(userId: string, amount: number, description: string, referenceId?: string, externalTx?: Prisma.TransactionClient) {
+
+        const execute = async (tx: Prisma.TransactionClient) => {
             const wallet = await tx.wallet.findUnique({ where: { user_id: userId } });
             if (!wallet) throw new Error('Wallet not found');
 
@@ -78,6 +85,12 @@ export class WalletService {
             });
 
             return newBalance;
-        });
+        };
+
+        if (externalTx) {
+            return execute(externalTx);
+        } else {
+            return await prisma.$transaction(execute);
+        }
     }
 }

@@ -35,8 +35,45 @@ model User {
   payouts         Payout[]
   referralsMade   Referral[] @relation("ReferralsMade")
   referralReceived Referral? @relation("ReferralsReceived")
+  subscriptions   UserSubscription[]
   
   referral_code   String?   @unique @db.VarChar(20)
+}
+
+// ... (Existing Payout/Referral models) ...
+
+// Membership System (Week 3)
+model MembershipPlan {
+  id              String   @id @default(uuid())
+  name            String   // e.g. "Gold", "Platinum"
+  description     String?
+  price           Decimal  @db.Decimal(10, 2)
+  duration_days   Int      // e.g. 30 for Monthly, 365 for Yearly
+  discount_percent Int     @default(0) // Percentage discount on services
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  
+  subscriptions   UserSubscription[]
+}
+
+model UserSubscription {
+  id              String             @id @default(uuid())
+  user_id         String
+  user            User               @relation(fields: [user_id], references: [id])
+  plan_id         String
+  plan            MembershipPlan     @relation(fields: [plan_id], references: [id])
+  start_date      DateTime           @default(now())
+  end_date        DateTime
+  status          SubscriptionStatus @default(ACTIVE)
+  razorpay_sub_id String?            // Razorpay Subscription ID
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }
 
 // ... (Existing OTP, Session, Wallet models remain same) ...

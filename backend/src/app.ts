@@ -54,12 +54,14 @@ import paymentRoutes from './modules/payment/payment.routes';
 import walletRoutes from './modules/wallet/wallet.routes';
 import payoutRoutes from './modules/payout/payout.routes';
 import referralRoutes from './modules/referral/referral.routes';
+import membershipRoutes from './modules/membership/membership.routes';
 
 app.use('/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/payouts', payoutRoutes);
 app.use('/api/referrals', referralRoutes);
+app.use('/api/memberships', membershipRoutes);
 
 
 // 6. Global Error Handler (Don't leak sensitive info)

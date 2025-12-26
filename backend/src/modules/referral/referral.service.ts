@@ -1,4 +1,5 @@
 
+import { Prisma } from '@prisma/client';
 import prisma from '../../shared/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { WalletService } from '../wallet/wallet.service';
@@ -61,12 +62,12 @@ export class ReferralService {
         const rewardAmount = Number(referral.reward_amount); // 100
 
         // Transaction
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             // Credit Referrer
-            await WalletService.addCredits(referral.referrer_id, rewardAmount, 'CREDIT', `Referral Bonus: ${referral.referee_id}`, tx);
+            await WalletService.addCredits(referral.referrer_id, rewardAmount, `Referral Bonus: ${referral.referee_id}`, undefined, tx);
 
             // Credit Referee
-            await WalletService.addCredits(referral.referee_id, rewardAmount, 'CREDIT', `Welcome Bonus (Ref: ${referral.referrer_id})`, tx);
+            await WalletService.addCredits(referral.referee_id, rewardAmount, `Welcome Bonus (Ref: ${referral.referrer_id})`, undefined, tx);
 
             // Update Status
             await tx.referral.update({

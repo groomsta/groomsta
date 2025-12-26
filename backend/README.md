@@ -66,6 +66,15 @@ A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, 
 *   `POST /api/referrals/apply` - Apply a Code
 *   `GET /api/referrals/stats` - View Performance
 
+### Membership System (Week 3)
+*   `GET /api/memberships/plans` - List available tiers
+*   `POST /api/memberships/subscribe` - Start subscription
+*   `GET /api/memberships/benefits` - Check status
+
+### Automation
+*   **Cron Job**: Runs every Sunday (23:59) to calculate Payouts.
+*   **Reports**: Auto-generates Reconciliation Templates.
+
 ---
 
 ## ⚡ Setup & Activation
