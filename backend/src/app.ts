@@ -37,13 +37,19 @@ app.get('/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'active', timestamp: new Date() });
 });
 
+// Swagger Documentation
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // Root Endpoint (Welcome Message)
 app.get('/', (req: Request, res: Response) => {
     res.status(200).json({
         message: 'Welcome to Groomsta Backend API',
         environment: process.env.NODE_ENV,
         health_check: '/health',
-        documentation: '/docs' // Placeholder
+        documentation: '/api-docs'
     });
 });
 
@@ -55,6 +61,7 @@ import walletRoutes from './modules/wallet/wallet.routes';
 import payoutRoutes from './modules/payout/payout.routes';
 import referralRoutes from './modules/referral/referral.routes';
 import membershipRoutes from './modules/membership/membership.routes';
+import notificationRoutes from './modules/notification/notification.routes';
 
 app.use('/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
@@ -62,6 +69,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/payouts', payoutRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/memberships', membershipRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 // 6. Global Error Handler (Don't leak sensitive info)

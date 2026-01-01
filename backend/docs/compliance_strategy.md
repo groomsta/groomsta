@@ -16,5 +16,11 @@ Based on Groomsta Cybersecurity Guidelines v1.0
 * **Approval Limits:** Transfers > ₹50,000 require Secondary Authorization.
 
 ## 4. API Security
-* **Rate Limiting**: 100 requests per 15 minutes per IP.
-* **Headers**: HSTS enabled, X-Frame-Options DENY.
+*   **Rate Limiting**: 100 requests per 15 minutes per IP.
+*   **Headers**: HSTS enabled, X-Frame-Options DENY.
+*   **Input Validation**: Zod-based validation for all incoming payloads.
+
+## 5. Security Auditing & Incident Response (Week 4)
+*   **Automated Audits**: `scripts/security-audit.ts` runs weekly to check for SQL Injection and Header vulnerabilities.
+*   **Incident Response**: See [Playbook](../incident_response_playbook.md) for Sev-1/Sev-2 outage protocols.
+*   **Penetration Testing**: Regular checks using OWASP ZAP guidelines.

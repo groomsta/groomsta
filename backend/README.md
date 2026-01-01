@@ -13,30 +13,21 @@ A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, 
     *   **MFA-Ready**: Architecture supports 2FA enforcement.
     *   **JWT Sessions**: Secure Access & Refresh Token rotation.
 
-### � Payment System (Advanced)
-*   **Provider**: Razorpay Integration.
-*   **Booking Advance**: Logic to accept **Partial Payments** (e.g., 20% advance).
-*   **Full Payments**: Standard full amount checkout.
-*   **Refunds**: Automated refund processing via API (Partial & Full).
-*   **Webhooks**: Real-time status updates (`payment.captured`, `refund.processed`) verified with HMAC SHA256 signatures.
+### 🛡️ Security & Notification Engine (Week 4)
+*   **Notification Queue**: High-performance Redis/BullMQ system for SMS & Email.
+*   **Unified Service**: Single API to send across channels.
+*   **Security Audit**: Automated vulnerability scanning scripts.
+*   **Production Ready**: Swagger Docs & Production Configs included.
 
-### 💰 Wallet System
-*   **Internal Ledger**: Users can hold credits (Prepaid/Rewards).
-*   **Transactions**:
-    *   `Top-up`: Add money to wallet.
-    *   `Deduct`: Pay for services using wallet balance.
-*   **Audit Trail**: Immutable history of `CREDIT` and `DEBIT` transactions.
+### � Payments & Wallet (Week 2)
+*   **Razorpay Integration**: Seamless checkout with `create_order` and `verify_signature`.
+*   **Wallet System**: Credits/debits with double-entry logging.
+*   **Refund Logic**: Automated refunds to Wallet or Source.
 
-### � Payout System (Partner Earnings)
-*   **Weekly Cycle**: Automated calculation of partner earnings.
-*   **Commission**: Built-in logic to deduct platform fees (Default: 20%).
-*   **Transfers**: Integration with **Razorpay Route/X** for direct bank transfers.
-*   **Admin Tools**: Endpoints to calculate, initiate, and verify payouts.
-
-### 🎁 Referral System
-*   **viral Growth**: Unique referral code generation (e.g., `HAMM1234`).
-*   **Instant Rewards**: Triggers **₹100 Wallet Credit** for both Referrer and Referee upon successful signup/usage.
-*   **Stats**: Track total referrals and earnings.
+### 💰 Payouts & Referrals (Week 3)
+*   **Weekly Payouts**: Cron job auto-calculates commissions and initiates transfers.
+*   **Referral System**: Unique codes, instant rewards (`₹100`), and tracking.
+*   **Membership**: Gold/Platinum plan subscriptions.
 
 ---
 
@@ -71,8 +62,9 @@ A "Fintech-grade" secure backend for the Groomsta platform, built with Node.js, 
 *   `POST /api/memberships/subscribe` - Start subscription
 *   `GET /api/memberships/benefits` - Check status
 
-### Automation
+### Notification & Automation (Week 4)
 *   **Cron Job**: Runs every Sunday (23:59) to calculate Payouts.
+*   **Notifications**: `POST /api/notifications/send` (via BullMQ).
 *   **Reports**: Auto-generates Reconciliation Templates.
 
 ---
@@ -94,6 +86,9 @@ JWT_SECRET="secret"
 RAZORPAY_KEY_ID="rzp_test_..."
 RAZORPAY_KEY_SECRET="secret"
 RAZORPAY_WEBHOOK_SECRET="secret"
+RAZORPAY_ACCOUNT_NUMBER="232323"
+REDIS_HOST="localhost"
+REDIS_PORT=6379
 ```
 
 ### 3. Database Activation (IMPORTANT)
@@ -109,6 +104,10 @@ npm run dev
 # Server starts at http://localhost:5000
 ```
 
-## 🛡️ Documentation
+## 🛡️ Documentation & Security (Week 4)
+
+*   **API Documentation (Swagger)**: Visit `http://localhost:5000/api-docs` to interact with the API.
+*   **Security Audit**: Run `npx ts-node scripts/security-audit.ts` to test vulnerabilities.
+*   **Incident Response**: [View Playbook](docs/incident_response_playbook.md)
 *   [Compliance Strategy](docs/compliance_strategy.md)
 *   [Payment & Webhook Guide](payment_webhook_guide.md)
