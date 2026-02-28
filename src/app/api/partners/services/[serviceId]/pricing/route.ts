@@ -17,11 +17,11 @@ const updatePricingSchema = z.object({
 // GET: Get partner's pricing for a service
 export async function GET(
   req: NextRequest,
-  { params }: { params: { serviceId: string } }
+  { params }: { params: Promise<{ serviceId: string }> }
 ) {
   // In real app: Get partnerId from auth token
   const partnerId = "partner-001";
-  const { serviceId } = params;
+  const { serviceId } = await params;
 
   const partnerServices = PARTNER_SERVICES[partnerId] || [];
   const service = partnerServices.find(s => s.serviceId === serviceId);
@@ -40,16 +40,16 @@ export async function GET(
 // PUT: Update partner's pricing for a service
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { serviceId: string } }
+  { params }: { params: Promise<{ serviceId: string }> }
 ) {
   try {
     const partnerId = "partner-001"; // From auth in real app
-    const { serviceId } = params;
+    const { serviceId } = await params;
     const body = await req.json();
 
     const parsed = updatePricingSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid input", details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
     }
 
     const { price, enabled } = parsed.data;

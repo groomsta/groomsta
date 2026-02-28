@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const availabilitySchema = z.object({
   isOnline: z.boolean().optional(),
-  workingHours: z.record(z.object({
+  workingHours: z.record(z.string(), z.object({
     enabled: z.boolean(),
     start: z.string(),
     end: z.string(),
@@ -35,7 +35,7 @@ let PARTNER_AVAILABILITY: Record<string, {
 // GET: Get partner availability
 export async function GET(req: NextRequest) {
   const partnerId = "partner-001"; // From auth in real app
-  
+
   const availability = PARTNER_AVAILABILITY[partnerId];
   if (!availability) {
     return NextResponse.json({ error: "Partner not found" }, { status: 404 });
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest) {
 
     const parsed = availabilitySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid input", details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: "Invalid input", details: parsed.error.issues }, { status: 400 });
     }
 
     const { isOnline, workingHours, blockedDates } = parsed.data;
