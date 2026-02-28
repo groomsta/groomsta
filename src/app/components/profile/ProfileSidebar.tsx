@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { User, ShoppingBag, MapPin, CreditCard, Bell, LogOut } from 'lucide-react';
+import { User, ShoppingBag, MapPin, CreditCard, Bell, LogOut, Crown, Share2 } from 'lucide-react';
 
 interface ProfileSidebarProps {
     activeTab: string;
@@ -12,7 +12,9 @@ const MENU_ITEMS = [
     { id: 'profile', label: 'My Profile', icon: User },
     { id: 'bookings', label: 'My Bookings', icon: ShoppingBag },
     { id: 'addresses', label: 'Saved Addresses', icon: MapPin },
-    { id: 'wallet', label: 'Wallet & Payments', icon: CreditCard },
+    { id: 'wallet', label: 'Wallet', icon: CreditCard },
+    { id: 'membership', label: 'Groomsta Plus', icon: Crown },
+    { id: 'referrals', label: 'Refer & Earn', icon: Share2 },
     { id: 'notifications', label: 'Notifications', icon: Bell },
 ];
 

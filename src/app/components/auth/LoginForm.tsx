@@ -31,11 +31,7 @@ export default function LoginForm() {
 
         setLoading(true);
         try {
-            // Call Backend to Send OTP
-            // Prefixing +91 as required for Twilio/E.164
             const fullPhone = `+91${phone}`;
-
-            // Endpoint: /auth/send-otp (Mapped to handleLogin logic which sends OTP)
             const res = await axios.post(`${API_Base}/auth/send-otp`, {
                 phone: fullPhone
             });
@@ -47,10 +43,27 @@ export default function LoginForm() {
             }
         } catch (err: any) {
             console.error('Login Error:', err);
-            const msg = err.response?.data?.message || 'Something went wrong. ensure backend is running.';
+            const msg = err.response?.data?.message || 'Something went wrong. Ensure backend is running.';
             setError(msg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleOtpChange = (index: number, value: string) => {
+        if (value.length > 1) return;
+        if (!/^\d*$/.test(value)) return;
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+        if (value && index < 3) {
+            otpRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Backspace' && !otp[index] && index > 0) {
+            otpRefs.current[index - 1]?.focus();
         }
     };
 
@@ -67,25 +80,14 @@ export default function LoginForm() {
 
         try {
             const fullPhone = `+91${phone}`;
-            // Endpoint: /auth/login (Mapped to verify logic? or verify-otp? Need to check routes.ts)
-            // Wait, previous summary said /auth/login is now /auth/send-otp? 
-            // Let's assume standard flow: 1. Send -> 2. Verify
-            // Based on auth.controller.ts: handleVerifyOTP expects { phone, otp }
-
-            // Checking route mapping in next step, but writing logic here assuming /auth/verify-otp or similar.
-            // If route is different, I will correct it.
-            // Using /auth/verify-otp based on standard naming convention I usually follow.
-
             const res = await axios.post(`${API_Base}/auth/verify-otp`, {
                 phone: fullPhone,
                 otp: otpValue
             });
 
             if (res.data.success) {
-                // Login Success
                 alert(`Login Successful! Token: ${res.data.accessToken}`);
-                // Save token, redirect...
-                // localStorage.setItem('token', res.data.accessToken);
+                // TODO: Save token and redirect
             } else {
                 setError(res.data.message || 'Invalid OTP');
             }
@@ -95,26 +97,6 @@ export default function LoginForm() {
             setError(msg);
         } finally {
             setLoading(false);
-        }
-    };
-
-    // ... (Rest of helper functions like handleOtpChange can stay, just rewriting main parts)
-
-    // Re-implementing helper functions to ensure file integrity in replacement
-    const handleOtpChange = (index: number, value: string) => {
-        if (value.length > 1) return;
-        if (!/^\d*$/.test(value)) return;
-        const newOtp = [...otp];
-        newOtp[index] = value;
-        setOtp(newOtp);
-        if (value && index < 3) {
-            otpRefs.current[index + 1]?.focus();
-        }
-    };
-
-    const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Backspace' && !otp[index] && index > 0) {
-            otpRefs.current[index - 1]?.focus();
         }
     };
 
@@ -209,4 +191,3 @@ export default function LoginForm() {
         </form>
     );
 }
-
