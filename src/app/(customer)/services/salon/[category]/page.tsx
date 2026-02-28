@@ -3,66 +3,59 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ChevronRight, ArrowLeft } from 'lucide-react';
 import SubcategoryTabs from '@/app/components/customer/SubcategoryTabs';
 import ServiceListingCard from '@/app/components/customer/ServiceListingCard';
 import ServiceDetailModal from '@/app/components/customer/ServiceDetailModal';
-import ServiceabilityCheck from '@/app/components/landingpage/ServiceabilityCheck';
 import ReviewList from '@/app/components/services/ReviewList';
 
-// Mock Data
-const MOCK_SUBCATEGORIES = {
+// Mock Data (Salon Specific)
+const MOCK_SALON_SUBCATEGORIES = {
     'haircut': [
         { id: 'men', label: 'Men\'s Haircut' },
+        { id: 'women', label: 'Women\'s Haircut' },
         { id: 'kids', label: 'Kid\'s Haircut' },
-        { id: 'color', label: 'Hair Color' },
     ],
     'beard': [
         { id: 'trim', label: 'Beard Trim' },
-        { id: 'shave', label: 'Clean Shave' },
-        { id: 'style', label: 'Beard Styling' },
+        { id: 'shave', label: 'Luxury Shave' },
     ],
     'facial': [
-        { id: 'cleanup', label: 'Cleanup' },
-        { id: 'detan', label: 'De-Tan' },
-        { id: 'gold', label: 'Gold Facial' },
-        { id: 'diamond', label: 'Diamond Facial' },
+        { id: 'express', label: 'Express Facial' },
+        { id: 'premium', label: 'Premium Facial' },
     ],
-    // Default fallback
     'default': [
         { id: 'all', label: 'All Services' },
-        { id: 'popular', label: 'Popular' },
+        { id: 'popular', label: 'Most Popular' },
     ]
 };
 
-const MOCK_SERVICES = [
-    { id: '1', title: 'Classic Haircut', price: 299, duration: '30 mins', description: 'Expert haircut by professionals including wash and blow dry.', subcat: 'men' },
-    { id: '2', title: 'Fade & Beard Trim', price: 499, duration: '45 mins', description: 'Complete grooming package with premium products.', subcat: 'men' },
-    { id: '3', title: 'Kid\'s Haircut', price: 249, duration: '30 mins', description: 'Patient and friendly barbers for your little ones.', subcat: 'kids' },
-    { id: '4', title: 'Global Hair Color', price: 1299, duration: '90 mins', description: 'Ammonia-free premium hair color application.', subcat: 'color' },
-    { id: '5', title: 'Premium Beard Shape', price: 199, duration: '20 mins', description: 'Line-up and shaping with straight razor finish.', subcat: 'trim' },
+const MOCK_SALON_SERVICES = [
+    { id: 's1', title: 'Director\'s Cut', price: 599, duration: '45 mins', description: 'Precision haircut by senior stylist with wash & style.', subcat: 'men' },
+    { id: 's2', title: 'Creative Cut', price: 999, duration: '60 mins', description: 'Transformation haircut with consultation.', subcat: 'women' },
+    { id: 's3', title: 'Luxury Beard Spa', price: 499, duration: '30 mins', description: 'Beard grooming with hot towel and essential oils.', subcat: 'shave' },
+    { id: 's4', title: 'O3+ Whitening Facial', price: 2499, duration: '60 mins', description: 'Brightening and tan removal treatment.', subcat: 'premium' },
+    { id: 's5', title: 'Classic Manicure', price: 499, duration: '45 mins', description: 'Nail shaping, cuticle care, and massage.', subcat: 'all' },
 ];
 
-export default function ServiceCategoryPage() {
+export default function SalonServiceCategoryPage() {
     const params = useParams();
     const router = useRouter();
     const categoryId = params.category as string;
 
-    // Normalize category ID for mock data (fallback to default if not found)
-    const tabs = MOCK_SUBCATEGORIES[categoryId as keyof typeof MOCK_SUBCATEGORIES] || MOCK_SUBCATEGORIES['default'];
+    const tabs = MOCK_SALON_SUBCATEGORIES[categoryId as keyof typeof MOCK_SALON_SUBCATEGORIES] || MOCK_SALON_SUBCATEGORIES['default'];
 
     const [activeTab, setActiveTab] = useState(tabs[0].id);
     const [cartCount, setCartCount] = useState(0);
-    const [selectedService, setSelectedService] = useState<typeof MOCK_SERVICES[0] | null>(null);
+    const [selectedService, setSelectedService] = useState<typeof MOCK_SALON_SERVICES[0] | null>(null);
 
     const categoryName = categoryId ? categoryId.charAt(0).toUpperCase() + categoryId.slice(1).replace('-', ' ') : 'Services';
 
     const handleAddService = (id: string) => {
         setCartCount(prev => prev + 1);
-        // In real app, dispatch to Redux/Zustand store
     };
 
-    const handleViewDetails = (service: typeof MOCK_SERVICES[0]) => {
+    const handleViewDetails = (service: typeof MOCK_SALON_SERVICES[0]) => {
         setSelectedService(service);
     };
 
@@ -74,7 +67,7 @@ export default function ServiceCategoryPage() {
                     <div className="flex items-center text-sm text-gray-500 mb-2">
                         <Link href="/" className="hover:text-[#0C3C85]">Home</Link>
                         <ChevronRight className="w-4 h-4 mx-1" />
-                        <Link href="/services/home" className="hover:text-[#0C3C85]">Services</Link>
+                        <Link href="/services/salon" className="hover:text-[#0C3C85]">Salon Services</Link>
                         <ChevronRight className="w-4 h-4 mx-1" />
                         <span className="text-[#0C3C85] font-medium capitalize">{categoryName}</span>
                     </div>
@@ -97,18 +90,17 @@ export default function ServiceCategoryPage() {
             </div>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 pb-32">
-
                 {/* Services List */}
                 <section>
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="font-montserrat text-xl font-bold text-[#1A1A1A]">
-                            Recommended for you
+                            Available at nearby salons
                         </h2>
-                        <span className="text-sm text-gray-500">{MOCK_SERVICES.length} services</span>
+                        <span className="text-sm text-gray-500">{MOCK_SALON_SERVICES.length} services</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                        {MOCK_SERVICES.map((service) => (
+                        {MOCK_SALON_SERVICES.map((service) => (
                             <div key={service.id} onClick={() => handleViewDetails(service)} className="cursor-pointer">
                                 <ServiceListingCard
                                     id={service.id}
@@ -131,13 +123,12 @@ export default function ServiceCategoryPage() {
                 {/* Info Banner */}
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center">
                     <p className="text-[#0C3C85] font-medium text-sm">
-                        All our partners are verified and follow strict hygiene protocols.
+                        Prices may vary slightly based on salon tier (Silver/Gold/Platinum).
                     </p>
                 </div>
-
             </main>
 
-            {/* Floating Cart Button (shows if cart has items) */}
+            {/* Floating Cart Button */}
             {cartCount > 0 && (
                 <div className="fixed bottom-6 left-0 right-0 px-4 z-50">
                     <div
@@ -150,7 +141,7 @@ export default function ServiceCategoryPage() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-sm text-gray-300">Total</span>
-                                <span className="font-bold text-lg">₹{MOCK_SERVICES.reduce((acc, curr, idx) => idx < cartCount ? acc + curr.price : acc, 0)}</span>
+                                <span className="font-bold text-lg">₹{MOCK_SALON_SERVICES.reduce((acc, curr, idx) => idx < cartCount ? acc + curr.price : acc, 0)}</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 font-semibold">

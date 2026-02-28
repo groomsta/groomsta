@@ -83,6 +83,10 @@ The landing page is fully componentized and includes the following sections:
 *   **Membership**: `src/app/components/profile/MembershipSection.tsx`
 *   **Referrals**: `src/app/components/profile/ReferralSection.tsx`
 
+### 2.9 Ratings & Reviews
+*   **Components**: `RatingModal`, `ReviewList`, `StarRating`
+*   **Integration**: [`BookingHistory`](src/app/components/profile/BookingHistory.tsx) (Submit), [`Service Category`](src/app/(customer)/services/home/[category]/page.tsx) (View)
+
 ## 3. Project Structure
 
 ### Key Directories

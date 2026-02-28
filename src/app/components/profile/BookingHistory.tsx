@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, MapPin, CheckCircle2, Navigation, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import RatingModal from '@/app/components/booking/RatingModal';
 
 // Mock Data
 const BOOKINGS = [
@@ -40,6 +42,8 @@ const BOOKINGS = [
 ];
 
 export default function BookingHistory() {
+    const [selectedBooking, setSelectedBooking] = useState<{ id: string, service: string } | null>(null);
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="font-montserrat font-bold text-lg text-[#1A1A1A]">Booking History</h2>
@@ -97,7 +101,11 @@ export default function BookingHistory() {
                                     )}
 
                                     {isCompleted && (
-                                        <Button variant="outline" className="h-9 text-xs gap-2 border-gray-200">
+                                        <Button
+                                            variant="outline"
+                                            className="h-9 text-xs gap-2 border-gray-200"
+                                            onClick={() => setSelectedBooking({ id: booking.id, service: booking.service })}
+                                        >
                                             <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
                                             Rate Service
                                         </Button>
@@ -114,6 +122,13 @@ export default function BookingHistory() {
                     );
                 })}
             </div>
+
+            <RatingModal
+                isOpen={!!selectedBooking}
+                onClose={() => setSelectedBooking(null)}
+                bookingId={selectedBooking?.id || ''}
+                serviceName={selectedBooking?.service || ''}
+            />
         </div>
     );
 }
