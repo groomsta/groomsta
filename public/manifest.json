@@ -1,0 +1,17 @@
+{
+    "name": "Groomsta - Premium Grooming",
+    "short_name": "Groomsta",
+    "description": "Premium grooming services delivered to your home or in-salon.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0C3C85",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "64x64",
+            "type": "image/x-icon"
+        }
+    ]
+}

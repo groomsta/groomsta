@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import NotificationCenter from '@/app/components/shared/NotificationCenter';
 
 export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -48,6 +49,7 @@ export default function Header() {
                         >
                             Profile
                         </Link>
+                        <NotificationCenter />
                         <Button asChild className="bg-[#0C3C85] hover:bg-blue-700 text-white font-semibold shadow-sm hover:shadow-md h-auto py-2.5 px-6 rounded-lg">
                             <Link href="/auth/login">
                                 Login
@@ -97,6 +99,10 @@ export default function Header() {
                             >
                                 Profile
                             </Link>
+                            <div className="px-2 py-2 border-t border-b flex justify-between items-center">
+                                <span className="font-medium text-[#1A1A1A]">Notifications</span>
+                                <NotificationCenter />
+                            </div>
                             <Button asChild className="bg-[#0C3C85] hover:bg-blue-700 text-white font-semibold w-full h-auto py-2.5 rounded-lg">
                                 <Link
                                     href="/auth/login"
