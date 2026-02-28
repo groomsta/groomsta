@@ -1,13 +1,25 @@
 import "./globals.css";
-// import { Inter } from "next/font/google"; // Skipping font optimization (mocking font) to avoid download issues for now, or use system font.
-// const inter = Inter({ subsets: ["latin"] }); 
+import { Poppins, Montserrat } from "next/font/google";
+import Providers from "@/components/providers";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-poppins',
+  display: 'swap',
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ['600', '700', '800'],
+  variable: '--font-montserrat',
+  display: 'swap',
+});
 
 export const metadata = {
-  title: "Groomsta Partner & Admin",
-  description: "Manage your grooming business",
+  title: "Groomsta - Premium Grooming. Anytime. Anywhere.",
+  description: "Book expert home grooming or visit trusted partner salons across Delhi NCR.",
 };
-
-import Providers from "@/components/providers";
 
 export default function RootLayout({
   children,
@@ -16,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
+      <body className={`${poppins.variable} ${montserrat.variable} font-sans antialiased`}>
         <Providers>
           {children}
         </Providers>

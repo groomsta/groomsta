@@ -1,0 +1,197 @@
+// Based on Groomsta Backend Doc [cite: 136-140]
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Role Enum for RBAC
+enum Role {
+  CUSTOMER
+  PARTNER
+  ADMIN
+}
+
+// Users Table (Customers)
+model User {
+  id              String    @id @default(uuid())
+  phone           String    @unique @db.VarChar(15)
+  email           String?   @unique @db.VarChar(255)
+  password        String?   // Hashed Password (Optional)
+  full_name       String?   @db.VarChar(255)
+  role            Role      @default(CUSTOMER) // New Role Field
+  profile_image   String?
+  is_verified     Boolean   @default(false)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+  
+  // Relations
+  // Relations
+  sessions        UserSession[]
+  wallet          Wallet?
+  payouts         Payout[]
+  referralsMade   Referral[] @relation("ReferralsMade")
+  referralReceived Referral? @relation("ReferralsReceived")
+  subscriptions   UserSubscription[]
+  
+  referral_code   String?   @unique @db.VarChar(20)
+}
+
+// ... (Existing Payout/Referral models) ...
+
+// Membership System (Week 3)
+model MembershipPlan {
+  id              String   @id @default(uuid())
+  name            String   // e.g. "Gold", "Platinum"
+  description     String?
+  price           Decimal  @db.Decimal(10, 2)
+  duration_days   Int      // e.g. 30 for Monthly, 365 for Yearly
+  discount_percent Int     @default(0) // Percentage discount on services
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  
+  subscriptions   UserSubscription[]
+}
+
+model UserSubscription {
+  id              String             @id @default(uuid())
+  user_id         String
+  user            User               @relation(fields: [user_id], references: [id])
+  plan_id         String
+  plan            MembershipPlan     @relation(fields: [plan_id], references: [id])
+  start_date      DateTime           @default(now())
+  end_date        DateTime
+  status          SubscriptionStatus @default(ACTIVE)
+  razorpay_sub_id String?            // Razorpay Subscription ID
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+// ... (Existing OTP, Session, Wallet models remain same) ...
+
+// Payout System (Dev 1)
+model Payout {
+  id              String       @id @default(uuid())
+  partner_id      String
+  partner         User         @relation(fields: [partner_id], references: [id])
+  amount          Decimal      @db.Decimal(10, 2)
+  currency        String       @default("INR")
+  status          PayoutStatus @default(PENDING)
+  razorpay_fund_account_id String? // Link to Razorpay Bank Account
+  razorpay_payout_id       String? // The actual transfer ID
+  cycle_start     DateTime
+  cycle_end       DateTime
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// Referral System (Dev 1)
+model Referral {
+  id              String         @id @default(uuid())
+  referrer_id     String
+  referrer        User           @relation("ReferralsMade", fields: [referrer_id], references: [id])
+  referee_id      String         @unique // One person can only be referred once
+  referee         User           @relation("ReferralsReceived", fields: [referee_id], references: [id])
+  status          ReferralStatus @default(PENDING)
+  reward_amount   Decimal        @default(100.00) @db.Decimal(10, 2)
+  created_at      DateTime       @default(now())
+  completed_at    DateTime?
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+}
+
+// OTP Verification (Crucial for Auth)
+model OtpVerification {
+  id          String   @id @default(uuid())
+  phone       String
+  otp         String   // Hashed
+  purpose     String   // 'login', 'register'
+  expires_at  DateTime
+  is_used     Boolean  @default(false)
+  attempts    Int      @default(0)
+  created_at  DateTime @default(now())
+
+  @@index([phone, expires_at])
+}
+
+// Session Management (Refresh Tokens)
+model UserSession {
+  id            String   @id @default(uuid())
+  user_id       String?
+  refresh_token String   @unique
+  device_info   Json?
+  expires_at    DateTime
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+
+  user    User?    @relation(fields: [user_id], references: [id])
+}
+
+// Wallet System
+model Wallet {
+  id           String              @id @default(uuid())
+  user_id      String              @unique
+  user         User                @relation(fields: [user_id], references: [id])
+  balance      Decimal             @default(0.00) @db.Decimal(10, 2)
+  currency     String              @default("INR")
+  created_at   DateTime            @default(now())
+  updated_at   DateTime            @updatedAt
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id           String          @id @default(uuid())
+  wallet_id    String
+  wallet       Wallet          @relation(fields: [wallet_id], references: [id])
+  amount       Decimal         @db.Decimal(10, 2)
+  type         TransactionType
+  description  String?
+  reference_id String? // e.g. Payment ID or Referral ID
+  created_at   DateTime        @default(now())
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+// Payment Logging & Reconciliation
+model Payment {
+  id                  String        @id @default(uuid())
+  user_id             String
+  amount              Decimal       @db.Decimal(10, 2)
+  currency            String        @default("INR")
+  status              PaymentStatus @default(PENDING)
+  provider            String        @default("RAZORPAY")
+  razorpay_order_id   String?       @unique
+  razorpay_payment_id String?       @unique
+  created_at          DateTime      @default(now())
+  updated_at          DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}

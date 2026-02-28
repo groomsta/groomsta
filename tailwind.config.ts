@@ -19,6 +19,10 @@ const config = {
     },
     extend: {
       colors: {
+        'royal-blue': '#0C3C85',
+        'golden-yellow': '#F2C94C',
+        'charcoal-black': '#1A1A1A',
+        'light-grey': '#F2F2F2',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -52,6 +56,10 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+      },
+      fontFamily: {
+        poppins: ['var(--font-poppins)', 'sans-serif'],
+        montserrat: ['var(--font-montserrat)', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
