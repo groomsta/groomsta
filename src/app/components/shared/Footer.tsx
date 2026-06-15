@@ -1,4 +1,5 @@
-import Link from 'next/link';
+import Link from "next/link";
+import { FaInstagram, FaLinkedin, FaFacebook, FaYoutube } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -10,8 +11,18 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 bg-[#0C3C85] rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2.5}
+                    d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"
+                  />
                 </svg>
               </div>
               <span className="text-xl font-bold">Groomsta</span>
@@ -19,6 +30,43 @@ export default function Footer() {
             <p className="text-gray-400 text-sm leading-relaxed">
               Premium Grooming. Anytime. Anywhere.
             </p>
+            <div className="flex gap-4 mt-5">
+              <a
+                href="https://instagram.com/thegroomsta"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <FaInstagram size={22} />
+              </a>
+
+              <a
+                href="https://linkedin.com/company/thegroomsta"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <FaLinkedin size={22} />
+              </a>
+
+              <a
+                href="https://facebook.com/thegroomsta"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <FaFacebook size={22} />
+              </a>
+
+              <a
+                href="https://youtube.com/@thegroomsta"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <FaYoutube size={22} />
+              </a>
+            </div>
           </div>
 
           {/* Column 2: Services */}
@@ -26,17 +74,26 @@ export default function Footer() {
             <h4 className="font-bold mb-4 text-white">Services</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/services/home" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/services/home"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Home Services
                 </Link>
               </li>
               <li>
-                <Link href="/services/salon" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/services/salon"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Salon Services
                 </Link>
               </li>
               <li>
-                <Link href="/track" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/track"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Track Booking
                 </Link>
               </li>
@@ -48,17 +105,26 @@ export default function Footer() {
             <h4 className="font-bold mb-4 text-white">Company</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/about" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/about"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/terms"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/privacy"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Privacy Policy
                 </Link>
               </li>
@@ -70,12 +136,26 @@ export default function Footer() {
             <h4 className="font-bold mb-4 text-white">Support</h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/partner/register"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  Become a Partner
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   Contact Support
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">
+                <Link
+                  href="/faq"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
                   FAQs
                 </Link>
               </li>
@@ -86,7 +166,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 text-center">
           <p className="text-gray-400 text-sm">
-            © 2025 Groomsta. All Rights Reserved.
+            © {new Date().getFullYear()} Groomsta. All Rights Reserved.
           </p>
         </div>
       </div>
