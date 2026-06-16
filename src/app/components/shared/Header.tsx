@@ -44,6 +44,12 @@ export default function Header() {
                             Track Booking
                         </Link>
                         <Link
+                            href="/about"
+                            className="text-[#1A1A1A] hover:text-[#0C3C85] transition-colors font-medium"
+                        >
+                            About Us
+                        </Link>
+                        <Link
                             href="/profile"
                             className="text-[#1A1A1A] hover:text-[#0C3C85] transition-colors font-medium"
                         >
@@ -91,6 +97,13 @@ export default function Header() {
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 Track Booking
+                            </Link>
+                            <Link
+                                href="/about"
+                                className="text-[#1A1A1A] hover:text-[#0C3C85] transition-colors font-medium px-2 py-2"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                About Us
                             </Link>
                             <Link
                                 href="/profile"
