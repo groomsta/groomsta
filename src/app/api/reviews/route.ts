@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        if (booking.reviews.length > 0) {
+        if (booking.reviews?.length) {
             return NextResponse.json(
                 { error: "This booking has already been reviewed" },
                 { status: 409 }
