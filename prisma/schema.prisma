@@ -8,189 +8,161 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// --------------------------------------------------------
-// 1. Users & Authentication
-// --------------------------------------------------------
-
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  phone           String    @unique @db.VarChar(15)
-  email           String?   @unique @db.VarChar(255)
-  passwordHash    String?   @map("password_hash") @db.VarChar(255)
-  fullName        String?   @map("full_name") @db.VarChar(255)
-  profileImageUrl String?   @map("profile_image_url")
-  isVerified      Boolean   @default(false) @map("is_verified")
-  isActive        Boolean   @default(true) @map("is_active")
-  lastLoginAt     DateTime? @map("last_login_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
-
-  // Relations
-  partner          Partner?
-  sessions         UserSession[]
-  addresses        UserAddress[]
-  bookings         Booking[]
-  receivedReviews  Review[]          @relation("ReviewUser")
-  authoredReviews  Review[]          @relation("ReviewAuthor") // Should clarify if users write reviews (usually yes)
-  referralsMade    Referral[]        @relation("Referrer")
-  referralsRecv    Referral[]        @relation("Referee")
-  referralCode     UserReferralCode?
-  memberships      UserMembership[]
-  couponUsage      CouponUsage[]
-  pushTokens       PushNotificationToken[]
-  notifications    Notification[]
-  auditLogs        AuditLog[]
-  wallet           UserWallet?
-  payments         Payment[]
-  refunds          Refund[]
-  walletTransactions WalletTransaction[]
+  id                   String                  @id @default(uuid()) @db.Uuid
+  phone                String                  @unique @db.VarChar(15)
+  email                String?                 @unique @db.VarChar(255)
+  passwordHash         String?                 @map("password_hash") @db.VarChar(255)
+  fullName             String?                 @map("full_name") @db.VarChar(255)
+  profileImageUrl      String?                 @map("profile_image_url")
+  isVerified           Boolean                 @default(false) @map("is_verified")
+  isActive             Boolean                 @default(true) @map("is_active")
+  lastLoginAt          DateTime?               @map("last_login_at")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @default(now()) @updatedAt @map("updated_at")
+  auditLogs            AuditLog[]
   bookingStatusUpdates BookingStatusHistory[]
+  bookings             Booking[]
+  couponUsage          CouponUsage[]
+  notifications        Notification[]
+  partner              Partner?
+  payments             Payment[]
+  pushTokens           PushNotificationToken[]
+  referralsRecv        Referral[]              @relation("Referee")
+  referralsMade        Referral[]              @relation("Referrer")
+  refunds              Refund[]
+  authoredReviews      Review[]                @relation("ReviewAuthor")
+  addresses            UserAddress[]
+  memberships          UserMembership[]
+  referralCode         UserReferralCode?
+  sessions             UserSession[]
+  wallet               UserWallet?
+  walletTransactions   WalletTransaction[]
 
-  @@map("users")
   @@index([phone])
   @@index([email])
+  @@map("users")
 }
 
 model OtpVerification {
   id        String   @id @default(uuid()) @db.Uuid
   phone     String   @db.VarChar(15)
   otp       String   @db.VarChar(6)
-  purpose   String   @db.VarChar(50) // login, registration, verification
+  purpose   String   @db.VarChar(50)
   expiresAt DateTime @map("expires_at")
   isUsed    Boolean  @default(false) @map("is_used")
   attempts  Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("otp_verifications")
   @@index([phone])
   @@index([expiresAt])
+  @@map("otp_verifications")
 }
 
 model UserSession {
   id           String   @id @default(uuid()) @db.Uuid
   userId       String   @map("user_id") @db.Uuid
-  partnerId    String?  @map("partner_id") @db.Uuid // If logged in as partner
+  partnerId    String?  @map("partner_id") @db.Uuid
   refreshToken String   @unique @map("refresh_token") @db.VarChar(500)
   deviceInfo   Json?    @map("device_info")
   expiresAt    DateTime @map("expires_at")
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
+  partner      Partner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  partner Partner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@map("user_sessions")
   @@index([userId])
   @@index([partnerId])
   @@index([refreshToken])
+  @@map("user_sessions")
 }
 
-// --------------------------------------------------------
-// 2. Partners
-// --------------------------------------------------------
-
 model Partner {
-  id                 String    @id @default(uuid()) @db.Uuid
-  userId             String    @unique @map("user_id") @db.Uuid // Link to User for login
-  partnerType        String    @map("partner_type") @db.VarChar(50) // individual, salon
-  
-  // Duplicating phone/email for quick access or business vs personal distinction?
-  // Following SQL spec which shows them in partners table:
-  phone              String    @unique @db.VarChar(15) 
-  email              String?   @unique @db.VarChar(255)
-  passwordHash       String?   @map("password_hash") @db.VarChar(255)
-  fullName           String    @map("full_name") @db.VarChar(255)
-  profileImageUrl    String?   @map("profile_image_url")
-
-  // Professional Details
-  experienceYears    Int?      @map("experience_years")
-  skills             String[]
-  bio                String?
-
-  // Verification
-  verificationStatus String    @default("pending") @map("verification_status") @db.VarChar(50) // pending, verified, rejected, suspended
-  verifiedAt         DateTime? @map("verified_at")
-  verifiedBy         String?   @map("verified_by") @db.Uuid
-  rejectionReason    String?   @map("rejection_reason")
-
-  // Location & Availability
-  latitude           Decimal?  @db.Decimal(10, 8)
-  longitude          Decimal?  @db.Decimal(11, 8)
-  serviceRadiusKm    Decimal   @default(10.0) @map("service_radius_km") @db.Decimal(5, 2)
-  isAvailable        Boolean   @default(true) @map("is_available")
-  isActive           Boolean   @default(true) @map("is_active")
-
-  // Ratings
-  averageRating      Decimal   @default(0.0) @map("average_rating") @db.Decimal(3, 2)
-  totalRatings       Int       @default(0) @map("total_ratings")
-  totalJobsCompleted Int       @default(0) @map("total_jobs_completed")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
-  // Relations
-  user              User               @relation(fields: [userId], references: [id])
-  verifier          AdminUser?         @relation(fields: [verifiedBy], references: [id])
-  documents         PartnerDocument[]
-  bankDetails       PartnerBankDetails?
-  salonDetails      SalonDetails?
-  availability      PartnerAvailability[]
-  blockedDates      PartnerBlockedDate[]
-  offeredServices   PartnerService[]
-  addonPricing      PartnerAddonPricing[]
-  bookings          Booking[]
-  bookingRequests   BookingRequest[]
-  payouts           PartnerPayout[]
-  reviews           Review[]
-  sessions          UserSession[]
-  notifications     Notification[]
-  pushTokens        PushNotificationToken[]
-  auditLogs         AuditLog[]
+  id                   String                  @id @default(uuid()) @db.Uuid
+  userId               String                  @unique @map("user_id") @db.Uuid
+  partnerType          String                  @map("partner_type") @db.VarChar(50)
+  phone                String                  @unique @db.VarChar(15)
+  email                String?                 @unique @db.VarChar(255)
+  passwordHash         String?                 @map("password_hash") @db.VarChar(255)
+  fullName             String                  @map("full_name") @db.VarChar(255)
+  profileImageUrl      String?                 @map("profile_image_url")
+  experienceYears      Int?                    @map("experience_years")
+  skills               String[]
+  bio                  String?
+  verificationStatus   String                  @default("pending") @map("verification_status") @db.VarChar(50)
+  verifiedAt           DateTime?               @map("verified_at")
+  verifiedBy           String?                 @map("verified_by") @db.Uuid
+  rejectionReason      String?                 @map("rejection_reason")
+  latitude             Decimal?                @db.Decimal(10, 8)
+  longitude            Decimal?                @db.Decimal(11, 8)
+  serviceRadiusKm      Decimal                 @default(10.0) @map("service_radius_km") @db.Decimal(5, 2)
+  isAvailable          Boolean                 @default(true) @map("is_available")
+  isActive             Boolean                 @default(true) @map("is_active")
+  averageRating        Decimal                 @default(0.0) @map("average_rating") @db.Decimal(3, 2)
+  totalRatings         Int                     @default(0) @map("total_ratings")
+  totalJobsCompleted   Int                     @default(0) @map("total_jobs_completed")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  updatedAt            DateTime                @default(now()) @updatedAt @map("updated_at")
+  auditLogs            AuditLog[]
+  bookingRequests      BookingRequest[]
   bookingStatusUpdates BookingStatusHistory[]
+  bookings             Booking[]
+  notifications        Notification[]
+  addonPricing         PartnerAddonPricing[]
+  availability         PartnerAvailability[]
+  bankDetails          PartnerBankDetails?
+  blockedDates         PartnerBlockedDate[]
+  documents            PartnerDocument[]
+  payouts              PartnerPayout[]
+  offeredServices      PartnerService[]
+  user                 User                    @relation(fields: [userId], references: [id])
+  verifier             AdminUser?              @relation(fields: [verifiedBy], references: [id])
+  pushTokens           PushNotificationToken[]
+  reviews              Review[]
+  salonDetails         SalonDetails?
+  sessions             UserSession[]
 
-  @@map("partners")
   @@index([phone])
   @@index([latitude, longitude])
   @@index([verificationStatus, isActive])
+  @@map("partners")
 }
 
 model PartnerDocument {
-  id                 String    @id @default(uuid()) @db.Uuid
-  partnerId          String    @map("partner_id") @db.Uuid
-  documentType       String    @map("document_type") @db.VarChar(50) // aadhaar, pan, license, photo
-  documentUrl        String    @map("document_url")
-  documentNumber     String?   @map("document_number") @db.VarChar(100)
-  verificationStatus String    @default("pending") @map("verification_status") @db.VarChar(50)
-  verifiedAt         DateTime? @map("verified_at")
-  verifiedBy         String?   @map("verified_by") @db.Uuid
+  id                 String     @id @default(uuid()) @db.Uuid
+  partnerId          String     @map("partner_id") @db.Uuid
+  documentType       String     @map("document_type") @db.VarChar(50)
+  documentUrl        String     @map("document_url")
+  documentNumber     String?    @map("document_number") @db.VarChar(100)
+  verificationStatus String     @default("pending") @map("verification_status") @db.VarChar(50)
+  verifiedAt         DateTime?  @map("verified_at")
+  verifiedBy         String?    @map("verified_by") @db.Uuid
   notes              String?
-  createdAt          DateTime  @default(now()) @map("created_at")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  partner            Partner    @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  verifier           AdminUser? @relation(fields: [verifiedBy], references: [id])
 
-  partner  Partner    @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  verifier AdminUser? @relation(fields: [verifiedBy], references: [id])
-
-  @@map("partner_documents")
   @@index([partnerId])
   @@index([verificationStatus])
+  @@map("partner_documents")
 }
 
 model PartnerBankDetails {
-  id                String   @id @default(uuid()) @db.Uuid
-  partnerId         String   @unique @map("partner_id") @db.Uuid
-  bankName          String   @map("bank_name") @db.VarChar(255)
-  accountHolderName String   @map("account_holder_name") @db.VarChar(255)
-  accountNumber     String   @map("account_number") @db.VarChar(50)
-  ifscCode          String   @map("ifsc_code") @db.VarChar(20)
-  accountType       String?  @map("account_type") @db.VarChar(50) // savings, current
-  isVerified        Boolean  @default(false) @map("is_verified")
+  id                String    @id @default(uuid()) @db.Uuid
+  partnerId         String    @unique @map("partner_id") @db.Uuid
+  bankName          String    @map("bank_name") @db.VarChar(255)
+  accountHolderName String    @map("account_holder_name") @db.VarChar(255)
+  accountNumber     String    @map("account_number") @db.VarChar(50)
+  ifscCode          String    @map("ifsc_code") @db.VarChar(20)
+  accountType       String?   @map("account_type") @db.VarChar(50)
+  isVerified        Boolean   @default(false) @map("is_verified")
   verifiedAt        DateTime? @map("verified_at")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+  partner           Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@map("partner_bank_details")
   @@index([partnerId])
+  @@map("partner_bank_details")
 }
 
 model SalonDetails {
@@ -201,33 +173,31 @@ model SalonDetails {
   pincode        String   @db.VarChar(10)
   latitude       Decimal? @db.Decimal(10, 8)
   longitude      Decimal? @db.Decimal(11, 8)
-  operatingHours Json?    @map("operating_hours") // monday: {open: "09:00", close: "21:00"}
+  operatingHours Json?    @map("operating_hours")
   amenities      String[]
   photos         String[]
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+  partner        Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@map("salon_details")
   @@index([partnerId])
   @@index([latitude, longitude])
+  @@map("salon_details")
 }
 
 model PartnerAvailability {
-  id        String   @id @default(uuid()) @db.Uuid
-  partnerId String   @map("partner_id") @db.Uuid
-  dayOfWeek Int      @map("day_of_week") // 0-Sunday, 6-Saturday
-  startTime String   @map("start_time") // HH:mm:ss
-  endTime   String   @map("end_time")   // HH:mm:ss
-  isAvailable Boolean @default(true) @map("is_available")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid()) @db.Uuid
+  partnerId   String   @map("partner_id") @db.Uuid
+  dayOfWeek   Int      @map("day_of_week")
+  startTime   String   @map("start_time")
+  endTime     String   @map("end_time")
+  isAvailable Boolean  @default(true) @map("is_available")
+  createdAt   DateTime @default(now()) @map("created_at")
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@map("partner_availability")
   @@unique([partnerId, dayOfWeek])
   @@index([partnerId])
+  @@map("partner_availability")
 }
 
 model PartnerBlockedDate {
@@ -236,151 +206,130 @@ model PartnerBlockedDate {
   blockedDate DateTime @map("blocked_date") @db.Date
   reason      String?
   createdAt   DateTime @default(now()) @map("created_at")
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@map("partner_blocked_dates")
   @@unique([partnerId, blockedDate])
   @@index([partnerId, blockedDate])
+  @@map("partner_blocked_dates")
 }
 
-// --------------------------------------------------------
-// 3. Services Catalog
-// --------------------------------------------------------
-
 model ServiceCategory {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String   @db.VarChar(255)
-  slug         String   @unique @db.VarChar(255)
-  description  String?
-  iconUrl      String?  @map("icon_url")
-  displayOrder Int      @default(0) @map("display_order")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
-
+  id            String               @id @default(uuid()) @db.Uuid
+  name          String               @db.VarChar(255)
+  slug          String               @unique @db.VarChar(255)
+  description   String?
+  iconUrl       String?              @map("icon_url")
+  displayOrder  Int                  @default(0) @map("display_order")
+  isActive      Boolean              @default(true) @map("is_active")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @default(now()) @updatedAt @map("updated_at")
   subcategories ServiceSubcategory[]
 
-  @@map("service_categories")
   @@index([slug])
   @@index([displayOrder])
+  @@map("service_categories")
 }
 
 model ServiceSubcategory {
-  id           String   @id @default(uuid()) @db.Uuid
-  categoryId   String   @map("category_id") @db.Uuid
-  name         String   @db.VarChar(255)
-  slug         String   @db.VarChar(255)
+  id           String          @id @default(uuid()) @db.Uuid
+  categoryId   String          @map("category_id") @db.Uuid
+  name         String          @db.VarChar(255)
+  slug         String          @db.VarChar(255)
   description  String?
-  iconUrl      String?  @map("icon_url")
-  displayOrder Int      @default(0) @map("display_order")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  iconUrl      String?         @map("icon_url")
+  displayOrder Int             @default(0) @map("display_order")
+  isActive     Boolean         @default(true) @map("is_active")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @default(now()) @updatedAt @map("updated_at")
+  category     ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  services     Service[]
 
-  category ServiceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  services Service[]
-
-  @@map("service_subcategories")
   @@unique([categoryId, slug])
   @@index([categoryId])
   @@index([slug])
+  @@map("service_subcategories")
 }
 
 model Service {
-  id                        String   @id @default(uuid()) @db.Uuid
-  subcategoryId             String   @map("subcategory_id") @db.Uuid
-  name                      String   @db.VarChar(255)
-  slug                      String   @unique @db.VarChar(255)
-  description               String?
-  longDescription           String?  @map("long_description")
-  
-  // Pricing
-  basePrice                 Decimal  @map("base_price") @db.Decimal(10, 2)
-  partnerPriceRangePercent  Decimal  @default(20.0) @map("partner_price_range_percent") @db.Decimal(5, 2)
+  id                       String             @id @default(uuid()) @db.Uuid
+  subcategoryId            String             @map("subcategory_id") @db.Uuid
+  name                     String             @db.VarChar(255)
+  slug                     String             @unique @db.VarChar(255)
+  description              String?
+  longDescription          String?            @map("long_description")
+  basePrice                Decimal            @map("base_price") @db.Decimal(10, 2)
+  partnerPriceRangePercent Decimal            @default(20.0) @map("partner_price_range_percent") @db.Decimal(5, 2)
+  durationMinutes          Int                @map("duration_minutes")
+  serviceType              String             @map("service_type") @db.VarChar(50)
+  hasGenderVariants        Boolean            @default(false) @map("has_gender_variants")
+  hasLocationVariants      Boolean            @default(false) @map("has_location_variants")
+  imageUrl                 String?            @map("image_url")
+  images                   String[]
+  isActive                 Boolean            @default(true) @map("is_active")
+  displayOrder             Int                @default(0) @map("display_order")
+  createdAt                DateTime           @default(now()) @map("created_at")
+  updatedAt                DateTime           @default(now()) @updatedAt @map("updated_at")
+  bundles                  BundleService[]
+  partnerServices          PartnerService[]
+  addons                   ServiceAddon[]
+  variants                 ServiceVariant[]
+  subcategory              ServiceSubcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
 
-  // Details
-  durationMinutes           Int      @map("duration_minutes")
-  serviceType               String   @map("service_type") @db.VarChar(50) // home, salon, both
-
-  // Variants
-  hasGenderVariants         Boolean  @default(false) @map("has_gender_variants")
-  hasLocationVariants       Boolean  @default(false) @map("has_location_variants")
-
-  // Media
-  imageUrl                  String?  @map("image_url")
-  images                    String[] 
-
-  isActive                  Boolean  @default(true) @map("is_active")
-  displayOrder              Int      @default(0) @map("display_order")
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at")
-
-  subcategory     ServiceSubcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
-  variants        ServiceVariant[]
-  addons          ServiceAddon[]
-  bundles         BundleService[]
-  partnerServices PartnerService[]
-
-  @@map("services")
   @@index([subcategoryId])
   @@index([slug])
   @@index([serviceType])
+  @@map("services")
 }
 
 model ServiceVariant {
-  id             String   @id @default(uuid()) @db.Uuid
-  serviceId      String   @map("service_id") @db.Uuid
-  variantType    String   @map("variant_type") @db.VarChar(50) // gender, location
-  variantValue   String   @map("variant_value") @db.VarChar(100) // male, female, delhi, noida
+  id              String  @id @default(uuid()) @db.Uuid
+  serviceId       String  @map("service_id") @db.Uuid
+  variantType     String  @map("variant_type") @db.VarChar(50)
+  variantValue    String  @map("variant_value") @db.VarChar(100)
   priceAdjustment Decimal @default(0.0) @map("price_adjustment") @db.Decimal(10, 2)
-  isActive       Boolean  @default(true) @map("is_active")
+  isActive        Boolean @default(true) @map("is_active")
+  service         Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  @@map("service_variants")
   @@unique([serviceId, variantType, variantValue])
   @@index([serviceId])
+  @@map("service_variants")
 }
 
 model ServiceAddon {
-  id              String   @id @default(uuid()) @db.Uuid
-  serviceId       String   @map("service_id") @db.Uuid
-  name            String   @db.VarChar(255)
+  id              String                @id @default(uuid()) @db.Uuid
+  serviceId       String                @map("service_id") @db.Uuid
+  name            String                @db.VarChar(255)
   description     String?
-  basePrice       Decimal  @map("base_price") @db.Decimal(10, 2)
-  durationMinutes Int      @default(0) @map("duration_minutes")
-  isActive        Boolean  @default(true) @map("is_active")
-
-  service         Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  partnerPricing  PartnerAddonPricing[]
+  basePrice       Decimal               @map("base_price") @db.Decimal(10, 2)
+  durationMinutes Int                   @default(0) @map("duration_minutes")
+  isActive        Boolean               @default(true) @map("is_active")
   bookingAddons   BookingAddon[]
+  partnerPricing  PartnerAddonPricing[]
+  service         Service               @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-  @@map("service_addons")
   @@index([serviceId])
+  @@map("service_addons")
 }
 
 model ServiceBundle {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String   @db.VarChar(255)
+  id              String          @id @default(uuid()) @db.Uuid
+  name            String          @db.VarChar(255)
   description     String?
-  bundlePrice     Decimal  @map("bundle_price") @db.Decimal(10, 2)
-  discountPercent Decimal? @map("discount_percent") @db.Decimal(5, 2)
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
+  bundlePrice     Decimal         @map("bundle_price") @db.Decimal(10, 2)
+  discountPercent Decimal?        @map("discount_percent") @db.Decimal(5, 2)
+  isActive        Boolean         @default(true) @map("is_active")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  services        BundleService[]
 
-  services BundleService[]
-
-  @@map("service_bundles")
   @@index([isActive])
+  @@map("service_bundles")
 }
 
 model BundleService {
-  bundleId  String @map("bundle_id") @db.Uuid
-  serviceId String @map("service_id") @db.Uuid
-
-  bundle  ServiceBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
-  service Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  bundleId  String        @map("bundle_id") @db.Uuid
+  serviceId String        @map("service_id") @db.Uuid
+  bundle    ServiceBundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  service   Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   @@id([bundleId, serviceId])
   @@map("bundle_services")
@@ -394,544 +343,431 @@ model PartnerService {
   isAvailable Boolean  @default(true) @map("is_available")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  @@map("partner_services")
   @@unique([partnerId, serviceId])
   @@index([partnerId])
   @@index([serviceId])
+  @@map("partner_services")
 }
 
 model PartnerAddonPricing {
-  id          String   @id @default(uuid()) @db.Uuid
-  partnerId   String   @map("partner_id") @db.Uuid
-  addonId     String   @map("addon_id") @db.Uuid
-  customPrice Decimal  @map("custom_price") @db.Decimal(10, 2)
-  isAvailable Boolean  @default(true) @map("is_available")
+  id          String       @id @default(uuid()) @db.Uuid
+  partnerId   String       @map("partner_id") @db.Uuid
+  addonId     String       @map("addon_id") @db.Uuid
+  customPrice Decimal      @map("custom_price") @db.Decimal(10, 2)
+  isAvailable Boolean      @default(true) @map("is_available")
+  addon       ServiceAddon @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  partner     Partner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
-  partner Partner      @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  addon   ServiceAddon @relation(fields: [addonId], references: [id], onDelete: Cascade)
-
-  @@map("partner_addon_pricing")
   @@unique([partnerId, addonId])
   @@index([partnerId])
+  @@map("partner_addon_pricing")
 }
 
-// --------------------------------------------------------
-// 4. Addresses & Bookings
-// --------------------------------------------------------
-
 model UserAddress {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  addressType   String   @default("home") @map("address_type") @db.VarChar(50) // home, work, other
-  houseNumber   String?  @map("house_number") @db.VarChar(100)
-  streetAddress String   @map("street_address")
-  landmark      String?  @db.VarChar(255)
-  pincode       String   @db.VarChar(10)
-  city          String   @db.VarChar(100)
-  state         String   @db.VarChar(100)
-  latitude      Decimal? @db.Decimal(10, 8)
-  longitude     Decimal? @db.Decimal(11, 8)
-  isDefault     Boolean  @default(false) @map("is_default")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  addressType   String    @default("home") @map("address_type") @db.VarChar(50)
+  houseNumber   String?   @map("house_number") @db.VarChar(100)
+  streetAddress String    @map("street_address")
+  landmark      String?   @db.VarChar(255)
+  pincode       String    @db.VarChar(10)
+  city          String    @db.VarChar(100)
+  state         String    @db.VarChar(100)
+  latitude      Decimal?  @db.Decimal(10, 8)
+  longitude     Decimal?  @db.Decimal(11, 8)
+  isDefault     Boolean   @default(false) @map("is_default")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+  bookings      Booking[]
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings Booking[]
-
-  @@map("user_addresses")
   @@index([userId])
   @@index([pincode])
   @@index([latitude, longitude])
+  @@map("user_addresses")
 }
 
 model ServiceableLocation {
-  id       String   @id @default(uuid()) @db.Uuid
-  pincode  String   @unique @db.VarChar(10)
-  city     String   @db.VarChar(100)
-  state    String   @db.VarChar(100)
-  isActive Boolean  @default(true) @map("is_active")
+  id        String   @id @default(uuid()) @db.Uuid
+  pincode   String   @unique @db.VarChar(10)
+  city      String   @db.VarChar(100)
+  state     String   @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@map("serviceable_locations")
   @@index([pincode])
+  @@map("serviceable_locations")
 }
 
 model Booking {
-  id            String   @id @default(uuid()) @db.Uuid
-  bookingNumber String   @unique @map("booking_number") @db.VarChar(50) // GRM-2024-001234
-  
-  // Relations
-  userId        String   @map("user_id") @db.Uuid
-  guestPhone    String?  @map("guest_phone") @db.VarChar(15)
-  guestName     String?  @map("guest_name") @db.VarChar(255)
-  partnerId     String?  @map("partner_id") @db.Uuid
-  serviceId     String   @map("service_id") @db.Uuid
-  serviceType   String   @map("service_type") @db.VarChar(50) // home, salon
-  addressId     String?  @map("address_id") @db.Uuid // if home
-  salonId       String?  @map("salon_id") @db.Uuid // if salon
+  id                 String                 @id @default(uuid()) @db.Uuid
+  bookingNumber      String                 @unique @map("booking_number") @db.VarChar(50)
+  userId             String                 @map("user_id") @db.Uuid
+  guestPhone         String?                @map("guest_phone") @db.VarChar(15)
+  guestName          String?                @map("guest_name") @db.VarChar(255)
+  partnerId          String?                @map("partner_id") @db.Uuid
+  serviceId          String                 @map("service_id") @db.Uuid
+  serviceType        String                 @map("service_type") @db.VarChar(50)
+  addressId          String?                @map("address_id") @db.Uuid
+  salonId            String?                @map("salon_id") @db.Uuid
+  bookingDate        DateTime               @map("booking_date") @db.Date
+  timeSlot           String                 @map("time_slot") @db.VarChar(50)
+  preferredStartTime DateTime?              @map("preferred_start_time") @db.Time(6)
+  actualStartTime    DateTime?              @map("actual_start_time")
+  actualEndTime      DateTime?              @map("actual_end_time")
+  serviceBasePrice   Decimal                @map("service_base_price") @db.Decimal(10, 2)
+  addonsPrice        Decimal                @default(0.0) @map("addons_price") @db.Decimal(10, 2)
+  surgeMultiplier    Decimal                @default(1.0) @map("surge_multiplier") @db.Decimal(4, 2)
+  discountAmount     Decimal                @default(0.0) @map("discount_amount") @db.Decimal(10, 2)
+  totalAmount        Decimal                @map("total_amount") @db.Decimal(10, 2)
+  partnerEarning     Decimal                @map("partner_earning") @db.Decimal(10, 2)
+  commissionAmount   Decimal                @map("commission_amount") @db.Decimal(10, 2)
+  commissionPercent  Decimal                @map("commission_percent") @db.Decimal(5, 2)
+  adjustments        Decimal                @default(0.0) @db.Decimal(10, 2)
+  netPayoutAmount    Decimal                @map("net_payout_amount") @db.Decimal(10, 2)
+  status             String                 @default("pending") @db.VarChar(50)
+  paymentStatus      String                 @default("pending") @map("payment_status") @db.VarChar(50)
+  bankAccountNumber  String?                @map("bank_account_number") @db.VarChar(50)
+  bankIfscCode       String?                @map("bank_ifsc_code") @db.VarChar(20)
+  otpStart           String?                @map("otp_start") @db.VarChar(6)
+  otpEnd             String?                @map("otp_end") @db.VarChar(6)
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @default(now()) @updatedAt @map("updated_at")
+  addons             BookingAddon[]
+  bookings           BookingRequest[]
+  statusHistory      BookingStatusHistory[]
+  address            UserAddress?           @relation(fields: [addressId], references: [id])
+  partner            Partner?               @relation(fields: [partnerId], references: [id])
+  user               User                   @relation(fields: [userId], references: [id])
+  couponUsage        CouponUsage[]
+  notifications      Notification[]
+  payments           Payment[]
+  refunds            Refund[]
+  reviews            Review?
 
-  // Scheduling
-  bookingDate   DateTime @map("booking_date") @db.Date
-  timeSlot      String   @map("time_slot") @db.VarChar(50)
-  preferredStartTime DateTime? @map("preferred_start_time") @db.Time
-  actualStartTime DateTime? @map("actual_start_time")
-  actualEndTime   DateTime? @map("actual_end_time")
-
-  // Pricing
-  serviceBasePrice  Decimal @map("service_base_price") @db.Decimal(10, 2)
-  addonsPrice       Decimal @default(0.0) @map("addons_price") @db.Decimal(10, 2)
-  surgeMultiplier   Decimal @default(1.0) @map("surge_multiplier") @db.Decimal(4, 2)
-  discountAmount    Decimal @default(0.0) @map("discount_amount") @db.Decimal(10, 2)
-  totalAmount       Decimal @map("total_amount") @db.Decimal(10, 2)
-  partnerEarning    Decimal @map("partner_earning") @db.Decimal(10, 2)
-  commissionAmount  Decimal @map("commission_amount") @db.Decimal(10, 2)
-  commissionPercent Decimal @map("commission_percent") @db.Decimal(5, 2)
-  adjustments       Decimal @default(0.0) @db.Decimal(10, 2)
-  netPayoutAmount   Decimal @map("net_payout_amount") @db.Decimal(10, 2)
-
-  // Status & Payment
-  status            String   @default("pending") @db.VarChar(50) // pending, accepted, started, completed, cancelled
-  paymentStatus     String   @default("pending") @map("payment_status") @db.VarChar(50)
-
-  // Bank Snapshot
-  bankAccountNumber String?  @map("bank_account_number") @db.VarChar(50)
-  bankIfscCode      String?  @map("bank_ifsc_code") @db.VarChar(20)
-  
-  // OTPs
-  otpStart          String?  @map("otp_start") @db.VarChar(6)
-  otpEnd            String?  @map("otp_end") @db.VarChar(6)
-
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user    User         @relation(fields: [userId], references: [id])
-  partner Partner?     @relation(fields: [partnerId], references: [id])
-  address UserAddress? @relation(fields: [addressId], references: [id])
-  
-  reviews           Review[]
-  payments          Payment[]
-  refunds           Refund[]
-  couponUsage       CouponUsage[]
-  notifications     Notification[]
-  bookings          BookingRequest[]
-  addons            BookingAddon[]
-  statusHistory     BookingStatusHistory[]
-
-  @@map("bookings")
   @@index([partnerId, status])
   @@index([userId, status])
   @@index([bookingNumber])
+  @@map("bookings")
 }
 
 model BookingRequest {
-  id           String   @id @default(uuid()) @db.Uuid
-  bookingId    String   @map("booking_id") @db.Uuid
-  partnerId    String   @map("partner_id") @db.Uuid
-  
-  requestStatus String  @default("sent") @map("request_status") @db.VarChar(50) // sent, seen, accepted, rejected, expired
-  
-  sentAt       DateTime @default(now()) @map("sent_at")
-  seenAt       DateTime? @map("seen_at")
-  respondedAt  DateTime? @map("responded_at")
-  expiresAt    DateTime @map("expires_at") // 20 seconds from sent
+  id                  String    @id @default(uuid()) @db.Uuid
+  bookingId           String    @map("booking_id") @db.Uuid
+  partnerId           String    @map("partner_id") @db.Uuid
+  requestStatus       String    @default("sent") @map("request_status") @db.VarChar(50)
+  sentAt              DateTime  @default(now()) @map("sent_at")
+  seenAt              DateTime? @map("seen_at")
+  respondedAt         DateTime? @map("responded_at")
+  expiresAt           DateTime  @map("expires_at")
+  offeredPrice        Decimal?  @map("offered_price") @db.Decimal(10, 2)
+  distanceKm          Decimal?  @map("distance_km") @db.Decimal(5, 2)
+  estimatedTravelTime Int?      @map("estimated_travel_time_minutes")
+  booking             Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  partner             Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
-  offeredPrice Decimal? @map("offered_price") @db.Decimal(10, 2)
-  
-  distanceKm   Decimal? @map("distance_km") @db.Decimal(5, 2)
-  estimatedTravelTime Int? @map("estimated_travel_time_minutes")
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-
-  @@map("booking_requests")
   @@index([bookingId])
   @@index([partnerId])
   @@index([requestStatus])
+  @@map("booking_requests")
 }
 
 model BookingAddon {
-  id          String   @id @default(uuid()) @db.Uuid
-  bookingId   String   @map("booking_id") @db.Uuid
-  addonId     String   @map("addon_id") @db.Uuid
-  
-  addonName   String   @map("addon_name") @db.VarChar(255)
-  addonPrice  Decimal  @map("addon_price") @db.Decimal(10, 2)
-  quantity    Int      @default(1)
+  id         String       @id @default(uuid()) @db.Uuid
+  bookingId  String       @map("booking_id") @db.Uuid
+  addonId    String       @map("addon_id") @db.Uuid
+  addonName  String       @map("addon_name") @db.VarChar(255)
+  addonPrice Decimal      @map("addon_price") @db.Decimal(10, 2)
+  quantity   Int          @default(1)
+  addon      ServiceAddon @relation(fields: [addonId], references: [id])
+  booking    Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  addon   ServiceAddon @relation(fields: [addonId], references: [id])
-
-  @@map("booking_addons")
   @@index([bookingId])
+  @@map("booking_addons")
 }
 
 model BookingStatusHistory {
-  id              String   @id @default(uuid()) @db.Uuid
-  bookingId       String   @map("booking_id") @db.Uuid
-  fromStatus      String?  @map("from_status") @db.VarChar(50)
-  toStatus        String   @map("to_status") @db.VarChar(50)
-  
-  changedByUserId String?  @map("changed_by_user_id") @db.Uuid
-  changedByPartnerId String? @map("changed_by_partner_id") @db.Uuid
-  changedByAdminId String? @map("changed_by_admin_id") @db.Uuid
-  
-  notes           String?
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                 String     @id @default(uuid()) @db.Uuid
+  bookingId          String     @map("booking_id") @db.Uuid
+  fromStatus         String?    @map("from_status") @db.VarChar(50)
+  toStatus           String     @map("to_status") @db.VarChar(50)
+  changedByUserId    String?    @map("changed_by_user_id") @db.Uuid
+  changedByPartnerId String?    @map("changed_by_partner_id") @db.Uuid
+  changedByAdminId   String?    @map("changed_by_admin_id") @db.Uuid
+  notes              String?
+  createdAt          DateTime   @default(now()) @map("created_at")
+  booking            Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  admin              AdminUser? @relation(fields: [changedByAdminId], references: [id])
+  partner            Partner?   @relation(fields: [changedByPartnerId], references: [id])
+  user               User?      @relation(fields: [changedByUserId], references: [id])
 
-  booking   Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  user      User?      @relation(fields: [changedByUserId], references: [id])
-  partner   Partner?   @relation(fields: [changedByPartnerId], references: [id])
-  admin     AdminUser? @relation(fields: [changedByAdminId], references: [id])
-
-  @@map("booking_status_history")
   @@index([bookingId])
+  @@map("booking_status_history")
 }
 
-// --------------------------------------------------------
-// 5. Payments & Payouts
-// --------------------------------------------------------
-
-// --------------------------------------------------------
-// 5. Payments & Financials
-// --------------------------------------------------------
-
 model Payment {
-  id              String   @id @default(uuid()) @db.Uuid
-  bookingId       String   @map("booking_id") @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  
-  paymentType     String   @map("payment_type") @db.VarChar(50) // full, partial, post_service
-  paymentMethod   String   @map("payment_method") @db.VarChar(50) // online, cash, wallet
-  paymentStage    String   @map("payment_stage") @db.VarChar(50) // advance, final
-  
-  amount          Decimal  @db.Decimal(10, 2)
-  walletAmountUsed Decimal @default(0.0) @map("wallet_amount_used") @db.Decimal(10, 2)
-  gatewayAmount   Decimal  @default(0.0) @map("gateway_amount") @db.Decimal(10, 2)
-  
-  // Gateway Info
-  paymentGateway  String?  @map("payment_gateway") @db.VarChar(50) // razorpay, cash
-  gatewayTransactionId String? @map("gateway_transaction_id") @db.VarChar(255)
-  gatewayOrderId  String?  @map("gateway_order_id") @db.VarChar(255)
-  gatewayPaymentId String? @map("gateway_payment_id") @db.VarChar(255)
-  gatewayResponse Json?    @map("gateway_response")
-  
-  paymentStatus   String   @default("pending") @map("payment_status") @db.VarChar(50)
-  failureReason   String?  @map("failure_reason")
-  
-  initiatedAt     DateTime @default(now()) @map("initiated_at")
-  completedAt     DateTime? @map("completed_at")
-  failedAt        DateTime? @map("failed_at")
-  
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+  id                   String    @id @default(uuid()) @db.Uuid
+  bookingId            String    @map("booking_id") @db.Uuid
+  userId               String    @map("user_id") @db.Uuid
+  paymentType          String    @map("payment_type") @db.VarChar(50)
+  paymentMethod        String    @map("payment_method") @db.VarChar(50)
+  paymentStage         String    @map("payment_stage") @db.VarChar(50)
+  amount               Decimal   @db.Decimal(10, 2)
+  walletAmountUsed     Decimal   @default(0.0) @map("wallet_amount_used") @db.Decimal(10, 2)
+  gatewayAmount        Decimal   @default(0.0) @map("gateway_amount") @db.Decimal(10, 2)
+  paymentGateway       String?   @map("payment_gateway") @db.VarChar(50)
+  gatewayTransactionId String?   @map("gateway_transaction_id") @db.VarChar(255)
+  gatewayOrderId       String?   @map("gateway_order_id") @db.VarChar(255)
+  gatewayPaymentId     String?   @map("gateway_payment_id") @db.VarChar(255)
+  gatewayResponse      Json?     @map("gateway_response")
+  paymentStatus        String    @default("pending") @map("payment_status") @db.VarChar(50)
+  failureReason        String?   @map("failure_reason")
+  initiatedAt          DateTime  @default(now()) @map("initiated_at")
+  completedAt          DateTime? @map("completed_at")
+  failedAt             DateTime? @map("failed_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
+  booking              Booking   @relation(fields: [bookingId], references: [id])
+  user                 User      @relation(fields: [userId], references: [id])
+  refunds              Refund[]
 
-  booking Booking @relation(fields: [bookingId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
-  refunds Refund[]
-
-  @@map("payments")
   @@index([bookingId])
   @@index([userId])
   @@index([paymentStatus])
   @@index([gatewayOrderId])
+  @@map("payments")
 }
 
 model UserWallet {
-  id             String   @id @default(uuid()) @db.Uuid
-  userId         String   @unique @map("user_id") @db.Uuid
-  balance        Decimal  @default(0.0) @db.Decimal(10, 2)
-  totalCredited  Decimal  @default(0.0) @map("total_credited") @db.Decimal(10, 2)
-  totalDebited   Decimal  @default(0.0) @map("total_debited") @db.Decimal(10, 2)
-  
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
+  id            String              @id @default(uuid()) @db.Uuid
+  userId        String              @unique @map("user_id") @db.Uuid
+  balance       Decimal             @default(0.0) @db.Decimal(10, 2)
+  totalCredited Decimal             @default(0.0) @map("total_credited") @db.Decimal(10, 2)
+  totalDebited  Decimal             @default(0.0) @map("total_debited") @db.Decimal(10, 2)
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @default(now()) @updatedAt @map("updated_at")
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  WalletTransaction[]
 
   @@map("user_wallets")
 }
 
 model WalletTransaction {
-  id              String   @id @default(uuid()) @db.Uuid
-  walletId        String   @map("wallet_id") @db.Uuid
-  userId          String   @map("user_id") @db.Uuid // Denormalized for query ease
-  
-  transactionType String   @map("transaction_type") @db.VarChar(50) // credit, debit, refund, referral, membership_discount
-  amount          Decimal  @db.Decimal(10, 2)
-  balanceBefore   Decimal  @map("balance_before") @db.Decimal(10, 2)
-  balanceAfter    Decimal  @map("balance_after") @db.Decimal(10, 2)
-  
-  // References
-  bookingId       String?  @map("booking_id") @db.Uuid
-  paymentId       String?  @map("payment_id") @db.Uuid
-  referralId      String?  @map("referral_id") @db.Uuid
-  
+  id              String     @id @default(uuid()) @db.Uuid
+  walletId        String     @map("wallet_id") @db.Uuid
+  userId          String     @map("user_id") @db.Uuid
+  transactionType String     @map("transaction_type") @db.VarChar(50)
+  amount          Decimal    @db.Decimal(10, 2)
+  balanceBefore   Decimal    @map("balance_before") @db.Decimal(10, 2)
+  balanceAfter    Decimal    @map("balance_after") @db.Decimal(10, 2)
+  bookingId       String?    @map("booking_id") @db.Uuid
+  paymentId       String?    @map("payment_id") @db.Uuid
+  referralId      String?    @map("referral_id") @db.Uuid
   description     String?
   metadata        Json?
-  
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  user            User       @relation(fields: [userId], references: [id])
+  wallet          UserWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
-  wallet   UserWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  user     User       @relation(fields: [userId], references: [id])
-  // booking, payment relations optional? Avoiding cycles for now or add if needed.
-  
-  @@map("wallet_transactions")
   @@index([walletId])
   @@index([userId])
   @@index([transactionType])
+  @@map("wallet_transactions")
 }
 
 model Refund {
-  id              String   @id @default(uuid()) @db.Uuid
-  paymentId       String   @map("payment_id") @db.Uuid
-  bookingId       String   @map("booking_id") @db.Uuid
-  userId          String   @map("user_id") @db.Uuid
-  
-  refundAmount    Decimal  @map("refund_amount") @db.Decimal(10, 2)
-  refundType      String   @map("refund_type") @db.VarChar(50) // full, partial
-  refundMethod    String   @map("refund_method") @db.VarChar(50) // wallet, original_source
-  
-  gatewayRefundId String?  @map("gateway_refund_id") @db.VarChar(255)
-  gatewayResponse Json?    @map("gateway_response")
-  
-  refundStatus    String   @default("pending") @map("refund_status") @db.VarChar(50)
+  id              String    @id @default(uuid()) @db.Uuid
+  paymentId       String    @map("payment_id") @db.Uuid
+  bookingId       String    @map("booking_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  refundAmount    Decimal   @map("refund_amount") @db.Decimal(10, 2)
+  refundType      String    @map("refund_type") @db.VarChar(50)
+  refundMethod    String    @map("refund_method") @db.VarChar(50)
+  gatewayRefundId String?   @map("gateway_refund_id") @db.VarChar(255)
+  gatewayResponse Json?     @map("gateway_response")
+  refundStatus    String    @default("pending") @map("refund_status") @db.VarChar(50)
   reason          String?
-  
-  initiatedBy     String   @map("initiated_by") @db.VarChar(50) // customer, partner, admin, system
-  
-  initiatedAt     DateTime @default(now()) @map("initiated_at")
+  initiatedBy     String    @map("initiated_by") @db.VarChar(50)
+  initiatedAt     DateTime  @default(now()) @map("initiated_at")
   completedAt     DateTime? @map("completed_at")
+  booking         Booking   @relation(fields: [bookingId], references: [id])
+  payment         Payment   @relation(fields: [paymentId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
 
-  payment Payment @relation(fields: [paymentId], references: [id])
-  booking Booking @relation(fields: [bookingId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
-
-  @@map("refunds")
   @@index([paymentId])
   @@index([bookingId])
+  @@map("refunds")
 }
 
 model PayoutBatch {
-  id               String   @id @default(uuid()) @db.Uuid
-  batchNumber      String   @unique @map("batch_number") @db.VarChar(50) // PAY-2024-W01
-  
-  periodStartDate  DateTime @map("period_start_date") @db.Date
-  periodEndDate    DateTime @map("period_end_date") @db.Date
-  
-  totalPartners    Int      @map("total_partners")
-  totalGrossAmount Decimal  @map("total_gross_amount") @db.Decimal(12, 2)
-  totalCommission  Decimal  @map("total_commission") @db.Decimal(12, 2)
-  totalNetAmount   Decimal  @map("total_net_amount") @db.Decimal(12, 2)
-  
-  payoutStatus     String   @default("pending") @map("payout_status") @db.VarChar(50) // pending, processing, completed, partially_completed
-  
-  generatedAt      DateTime @default(now()) @map("generated_at")
-  processedAt      DateTime? @map("processed_at")
-  processedBy      String?  @map("processed_by") @db.Uuid // Admin ID
-  
+  id               String          @id @default(uuid()) @db.Uuid
+  batchNumber      String          @unique @map("batch_number") @db.VarChar(50)
+  periodStartDate  DateTime        @map("period_start_date") @db.Date
+  periodEndDate    DateTime        @map("period_end_date") @db.Date
+  totalPartners    Int             @map("total_partners")
+  totalGrossAmount Decimal         @map("total_gross_amount") @db.Decimal(12, 2)
+  totalCommission  Decimal         @map("total_commission") @db.Decimal(12, 2)
+  totalNetAmount   Decimal         @map("total_net_amount") @db.Decimal(12, 2)
+  payoutStatus     String          @default("pending") @map("payout_status") @db.VarChar(50)
+  generatedAt      DateTime        @default(now()) @map("generated_at")
+  processedAt      DateTime?       @map("processed_at")
+  processedBy      String?         @map("processed_by") @db.Uuid
   notes            String?
-
   payouts          PartnerPayout[]
 
-  @@map("payout_batches")
   @@index([payoutStatus])
   @@index([periodStartDate, periodEndDate])
+  @@map("payout_batches")
 }
 
 model PartnerPayout {
-  id              String   @id @default(uuid()) @db.Uuid
-  payoutBatchId   String   @map("payout_batch_id") @db.Uuid
-  partnerId       String   @map("partner_id") @db.Uuid
-  
-  periodStartDate DateTime @map("period_start_date") @db.Date
-  periodEndDate   DateTime @map("period_end_date") @db.Date
-  
-  // Amounts
-  totalBookings   Int      @map("total_bookings")
-  grossEarnings   Decimal  @map("gross_earnings") @db.Decimal(10, 2)
-  commissionAmount Decimal @map("commission_amount") @db.Decimal(10, 2)
-  commissionPercent Decimal @map("commission_percent") @db.Decimal(5, 2) // Avg?
-  netPayoutAmount Decimal  @map("net_payout_amount") @db.Decimal(10, 2)
-  
-  status          String   @default("pending") @db.VarChar(50)
-  
-  transactionReference String? @map("transaction_reference") @db.VarChar(255)
-  failureReason        String? @map("failure_reason")
-  
-  processedAt     DateTime? @map("processed_at")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id                   String      @id @default(uuid()) @db.Uuid
+  payoutBatchId        String      @map("payout_batch_id") @db.Uuid
+  partnerId            String      @map("partner_id") @db.Uuid
+  periodStartDate      DateTime    @map("period_start_date") @db.Date
+  periodEndDate        DateTime    @map("period_end_date") @db.Date
+  totalBookings        Int         @map("total_bookings")
+  grossEarnings        Decimal     @map("gross_earnings") @db.Decimal(10, 2)
+  commissionAmount     Decimal     @map("commission_amount") @db.Decimal(10, 2)
+  commissionPercent    Decimal     @map("commission_percent") @db.Decimal(5, 2)
+  netPayoutAmount      Decimal     @map("net_payout_amount") @db.Decimal(10, 2)
+  status               String      @default("pending") @db.VarChar(50)
+  transactionReference String?     @map("transaction_reference") @db.VarChar(255)
+  failureReason        String?     @map("failure_reason")
+  processedAt          DateTime?   @map("processed_at")
+  createdAt            DateTime    @default(now()) @map("created_at")
+  partner              Partner     @relation(fields: [partnerId], references: [id])
+  batch                PayoutBatch @relation(fields: [payoutBatchId], references: [id])
 
-  batch   PayoutBatch @relation(fields: [payoutBatchId], references: [id])
-  partner Partner     @relation(fields: [partnerId], references: [id])
-  
-  // Which bookings are covered? (Optional link, usually derived from date range or linking table)
-  // Maintaining simple link for now or add PayoutBookingItem if needed (like previously)
-  // SQL screenshot didn't show items table, but it's good practice. I'll omit items table for now to match screenshot strictness unless needed.
-  // Actually, keeping PayoutBookingItem is better for audit. I'll add it back if space permits or User asks. 
-  // Sticking to SQL screenshot strictness: "Individual Payouts" table shown.
-  
-  @@map("partner_payouts")
   @@index([payoutBatchId])
   @@index([partnerId])
   @@index([status])
+  @@map("partner_payouts")
 }
 
-// --------------------------------------------------------
-// 6. Growth, Reviews & Notifications
-// --------------------------------------------------------
-
 model Review {
-  id                  String   @id @default(uuid()) @db.Uuid
-  bookingId           String   @unique @map("booking_id") @db.Uuid
-  userId              String   @map("user_id") @db.Uuid
-  partnerId           String   @map("partner_id") @db.Uuid
-  
-  overallRating       Decimal  @map("overall_rating") @db.Decimal(2, 1)
-  professionalismRating Decimal? @map("professionalism_rating") @db.Decimal(2, 1)
-  qualityRating       Decimal? @map("quality_rating") @db.Decimal(2, 1)
-  punctualityRating   Decimal? @map("punctuality_rating") @db.Decimal(2, 1)
+  id                    String    @id @default(uuid()) @db.Uuid
+  bookingId             String    @unique @map("booking_id") @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  partnerId             String    @map("partner_id") @db.Uuid
+  overallRating         Decimal   @map("overall_rating") @db.Decimal(2, 1)
+  professionalismRating Decimal?  @map("professionalism_rating") @db.Decimal(2, 1)
+  qualityRating         Decimal?  @map("quality_rating") @db.Decimal(2, 1)
+  punctualityRating     Decimal?  @map("punctuality_rating") @db.Decimal(2, 1)
+  reviewText            String?   @map("review_text")
+  reviewImages          String[]  @map("review_images")
+  partnerResponse       String?   @map("partner_response")
+  partnerRespondedAt    DateTime? @map("partner_responded_at")
+  isVerified            Boolean   @default(false) @map("is_verified")
+  isVisible             Boolean   @default(true) @map("is_visible")
+  isFlagged             Boolean   @default(false) @map("is_flagged")
+  flaggedReason         String?   @map("flagged_reason")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
+  booking               Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  partner               Partner   @relation(fields: [partnerId], references: [id])
+  user                  User      @relation("ReviewAuthor", fields: [userId], references: [id])
 
-  reviewText          String?  @map("review_text")
-  reviewImages        String[] @map("review_images")
-  partnerResponse     String?  @map("partner_response")
-  partnerRespondedAt  DateTime? @map("partner_responded_at")
-
-  isVerified          Boolean  @default(false) @map("is_verified")
-  isVisible           Boolean  @default(true) @map("is_visible")
-  isFlagged           Boolean  @default(false) @map("is_flagged")
-  flaggedReason       String?  @map("flagged_reason")
-
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
-
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  user    User    @relation("ReviewAuthor", fields: [userId], references: [id]) // Assuming user writes review
-  // The partner being reviewed:
-  partner Partner @relation(fields: [partnerId], references: [id])
-  // Relation for user receiving reviews? (if user rating exists) - Skipping for now as PRD focuses on Partner rating
-
-  // To support User.receivedReviews relation:
-  userRecipient User? @relation("ReviewUser", fields: [userId], references: [id], map: "user_recipient_fk")
-  // Wait, schema says user_id is author. If review is ABOUT user, we need explicit field. 
-  // Assuming Partner reviews User is different table or implicitly handled. SQL implies User reviews Partner.
-
-  @@map("reviews")
   @@index([partnerId])
   @@index([userId])
   @@index([overallRating])
+  @@map("reviews")
 }
 
 model Referral {
-  id             String   @id @default(uuid()) @db.Uuid
-  referrerUserId String   @map("referrer_user_id") @db.Uuid
-  refereeUserId  String   @map("referee_user_id") @db.Uuid
-  referralCode   String   @map("referral_code") @db.VarChar(50)
-  
-  status         String   @default("pending") @db.VarChar(50) // pending, completed
-  referrerRewardAmount Decimal @default(100.00) @map("referrer_reward_amount") @db.Decimal(10, 2)
-  refereeRewardAmount  Decimal @default(100.00) @map("referee_reward_amount") @db.Decimal(10, 2)
-  
-  referrerCredited Boolean @default(false) @map("referrer_credited")
-  refereeCredited  Boolean @default(false) @map("referee_credited")
-  
-  createdAt      DateTime @default(now()) @map("created_at")
+  id                   String   @id @default(uuid()) @db.Uuid
+  referrerUserId       String   @map("referrer_user_id") @db.Uuid
+  refereeUserId        String   @map("referee_user_id") @db.Uuid
+  referralCode         String   @map("referral_code") @db.VarChar(50)
+  status               String   @default("pending") @db.VarChar(50)
+  referrerRewardAmount Decimal  @default(100.00) @map("referrer_reward_amount") @db.Decimal(10, 2)
+  refereeRewardAmount  Decimal  @default(100.00) @map("referee_reward_amount") @db.Decimal(10, 2)
+  referrerCredited     Boolean  @default(false) @map("referrer_credited")
+  refereeCredited      Boolean  @default(false) @map("referee_credited")
+  createdAt            DateTime @default(now()) @map("created_at")
+  referee              User     @relation("Referee", fields: [refereeUserId], references: [id])
+  referrer             User     @relation("Referrer", fields: [referrerUserId], references: [id])
 
-  referrer User @relation("Referrer", fields: [referrerUserId], references: [id])
-  referee  User @relation("Referee", fields: [refereeUserId], references: [id])
-
-  @@map("referrals")
   @@index([referrerUserId])
   @@index([refereeUserId])
+  @@map("referrals")
 }
 
 model UserReferralCode {
-  id                 String   @id @default(uuid()) @db.Uuid
-  userId             String   @unique @map("user_id") @db.Uuid
-  referralCode       String   @unique @map("referral_code") @db.VarChar(50)
-  totalReferrals     Int      @default(0) @map("total_referrals")
-  successfulReferrals Int     @default(0) @map("successful_referrals")
-  totalEarned        Decimal  @default(0.0) @map("total_earned") @db.Decimal(10, 2)
-  createdAt          DateTime @default(now()) @map("created_at")
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @unique @map("user_id") @db.Uuid
+  referralCode        String   @unique @map("referral_code") @db.VarChar(50)
+  totalReferrals      Int      @default(0) @map("total_referrals")
+  successfulReferrals Int      @default(0) @map("successful_referrals")
+  totalEarned         Decimal  @default(0.0) @map("total_earned") @db.Decimal(10, 2)
+  createdAt           DateTime @default(now()) @map("created_at")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_referral_codes")
   @@index([referralCode])
+  @@map("user_referral_codes")
 }
 
 model MembershipPlan {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String   @db.VarChar(255)
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String           @db.VarChar(255)
   description     String?
-  monthlyPrice    Decimal  @map("monthly_price") @db.Decimal(10, 2)
-  validityDays    Int      @map("validity_days")
-  
-  discountPercent Decimal? @map("discount_percent") @db.Decimal(5, 2)
-  flatDiscount    Decimal? @map("flat_discount") @db.Decimal(10, 2)
-  prioritySupport Boolean  @default(false) @map("priority_support")
-  priorityBooking Boolean  @default(false) @map("priority_booking")
-
-  isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
-
+  monthlyPrice    Decimal          @map("monthly_price") @db.Decimal(10, 2)
+  validityDays    Int              @map("validity_days")
+  discountPercent Decimal?         @map("discount_percent") @db.Decimal(5, 2)
+  flatDiscount    Decimal?         @map("flat_discount") @db.Decimal(10, 2)
+  prioritySupport Boolean          @default(false) @map("priority_support")
+  priorityBooking Boolean          @default(false) @map("priority_booking")
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at")
   subscriptions   UserMembership[]
 
   @@map("membership_plans")
 }
 
 model UserMembership {
-  id                 String   @id @default(uuid()) @db.Uuid
-  userId             String   @map("user_id") @db.Uuid
-  planId             String   @map("plan_id") @db.Uuid
-  subscriptionStatus String   @default("active") @map("subscription_status") @db.VarChar(50) // active, expired, cancelled
-  
-  startedAt          DateTime @map("started_at")
-  expiresAt          DateTime @map("expires_at")
-  cancelledAt        DateTime? @map("cancelled_at")
+  id                 String         @id @default(uuid()) @db.Uuid
+  userId             String         @map("user_id") @db.Uuid
+  planId             String         @map("plan_id") @db.Uuid
+  subscriptionStatus String         @default("active") @map("subscription_status") @db.VarChar(50)
+  startedAt          DateTime       @map("started_at")
+  expiresAt          DateTime       @map("expires_at")
+  cancelledAt        DateTime?      @map("cancelled_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at")
+  plan               MembershipPlan @relation(fields: [planId], references: [id])
+  user               User           @relation(fields: [userId], references: [id])
 
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user User           @relation(fields: [userId], references: [id])
-  plan MembershipPlan @relation(fields: [planId], references: [id])
-
-  @@map("user_memberships")
   @@index([userId])
   @@index([subscriptionStatus])
+  @@map("user_memberships")
 }
 
 model Coupon {
-  id               String   @id @default(uuid()) @db.Uuid
-  code             String   @unique @db.VarChar(50)
-  title            String   @db.VarChar(255)
-  description      String?
-  discountType     String   @map("discount_type") @db.VarChar(50) // percentage, fixed
-  discountValue    Decimal  @map("discount_value") @db.Decimal(10, 2)
-  maxDiscountAmount Decimal? @map("max_discount_amount") @db.Decimal(10, 2) // for percentage
-  minOrderAmount   Decimal? @map("min_order_amount") @db.Decimal(10, 2)
+  id                String        @id @default(uuid()) @db.Uuid
+  code              String        @unique @db.VarChar(50)
+  title             String        @db.VarChar(255)
+  description       String?
+  discountType      String        @map("discount_type") @db.VarChar(50)
+  discountValue     Decimal       @map("discount_value") @db.Decimal(10, 2)
+  maxDiscountAmount Decimal?      @map("max_discount_amount") @db.Decimal(10, 2)
+  minOrderAmount    Decimal?      @map("min_order_amount") @db.Decimal(10, 2)
+  usageLimitPerUser Int           @default(1) @map("usage_limit_per_user")
+  totalUsageLimit   Int?          @map("total_usage_limit")
+  currentUsageCount Int           @default(0) @map("current_usage_count")
+  validFrom         DateTime      @map("valid_from")
+  validUntil        DateTime      @map("valid_until")
+  isActive          Boolean       @default(true) @map("is_active")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at")
+  usages            CouponUsage[]
 
-  usageLimitPerUser Int     @default(1) @map("usage_limit_per_user")
-  totalUsageLimit   Int?    @map("total_usage_limit")
-  currentUsageCount Int     @default(0) @map("current_usage_count")
-
-  validFrom        DateTime @map("valid_from")
-  validUntil       DateTime @map("valid_until")
-
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
-
-  usages           CouponUsage[]
-
-  @@map("coupons")
   @@index([code])
   @@index([validFrom, validUntil])
+  @@map("coupons")
 }
 
 model CouponUsage {
@@ -941,129 +777,114 @@ model CouponUsage {
   bookingId      String?  @map("booking_id") @db.Uuid
   discountAmount Decimal  @map("discount_amount") @db.Decimal(10, 2)
   usedAt         DateTime @default(now()) @map("used_at")
+  booking        Booking? @relation(fields: [bookingId], references: [id])
+  coupon         Coupon   @relation(fields: [couponId], references: [id])
+  user           User     @relation(fields: [userId], references: [id])
 
-  coupon  Coupon   @relation(fields: [couponId], references: [id])
-  user    User     @relation(fields: [userId], references: [id])
-  booking Booking? @relation(fields: [bookingId], references: [id])
-
-  @@map("coupon_usage")
   @@index([couponId])
   @@index([userId])
+  @@map("coupon_usage")
 }
 
 model Notification {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String?  @map("user_id") @db.Uuid
-  partnerId        String?  @map("partner_id") @db.Uuid
-  notificationType String   @map("notification_type") @db.VarChar(50) 
-  title            String   @db.VarChar(255)
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String?   @map("user_id") @db.Uuid
+  partnerId        String?   @map("partner_id") @db.Uuid
+  notificationType String    @map("notification_type") @db.VarChar(50)
+  title            String    @db.VarChar(255)
   message          String
-  channels         String[] // sms, email, push
-  deliveryStatus   Json?    @map("delivery_status") // {sms: sent, email: failed}
+  channels         String[]
+  deliveryStatus   Json?     @map("delivery_status")
   metadata         Json?
-  bookingId        String?  @map("booking_id") @db.Uuid
-
-  isRead           Boolean  @default(false) @map("is_read")
+  bookingId        String?   @map("booking_id") @db.Uuid
+  isRead           Boolean   @default(false) @map("is_read")
   readAt           DateTime? @map("read_at")
-  createdAt        DateTime @default(now()) @map("created_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  booking          Booking?  @relation(fields: [bookingId], references: [id])
+  partner          Partner?  @relation(fields: [partnerId], references: [id])
+  user             User?     @relation(fields: [userId], references: [id])
 
-  user    User?    @relation(fields: [userId], references: [id])
-  partner Partner? @relation(fields: [partnerId], references: [id])
-  booking Booking? @relation(fields: [bookingId], references: [id])
-
-  @@map("notifications")
   @@index([userId])
   @@index([partnerId])
   @@index([isRead])
+  @@map("notifications")
 }
 
 model NotificationTemplate {
-  id           String   @id @default(uuid()) @db.Uuid
-  templateKey  String   @unique @map("template_key") @db.VarChar(100)
-  templateName String   @map("template_name") @db.VarChar(255)
-  
-  smsTemplate  String?  @map("sms_template")
-  emailSubject String?  @map("email_subject")
-  emailTemplate String? @map("email_template")
-  pushTitle    String?  @map("push_title")
-  pushBody     String?  @map("push_body")
-  
-  variables    String[] 
-  isActive     Boolean  @default(true) @map("is_active")
+  id            String   @id @default(uuid()) @db.Uuid
+  templateKey   String   @unique @map("template_key") @db.VarChar(100)
+  templateName  String   @map("template_name") @db.VarChar(255)
+  smsTemplate   String?  @map("sms_template")
+  emailSubject  String?  @map("email_subject")
+  emailTemplate String?  @map("email_template")
+  pushTitle     String?  @map("push_title")
+  pushBody      String?  @map("push_body")
+  variables     String[]
+  isActive      Boolean  @default(true) @map("is_active")
 
   @@map("notification_templates")
 }
 
 model PushNotificationToken {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String?  @map("user_id") @db.Uuid
-  partnerId   String?  @map("partner_id") @db.Uuid
-  token       String   @db.VarChar(500)
-  deviceType  String?  @map("device_type") @db.VarChar(50) // android, ios, web
-  deviceInfo  Json?    @map("device_info")
-  isActive    Boolean  @default(true) @map("is_active")
-  lastUsedAt  DateTime @default(now()) @map("last_used_at")
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  partnerId  String?  @map("partner_id") @db.Uuid
+  token      String   @db.VarChar(500)
+  deviceType String?  @map("device_type") @db.VarChar(50)
+  deviceInfo Json?    @map("device_info")
+  isActive   Boolean  @default(true) @map("is_active")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+  partner    Partner? @relation(fields: [partnerId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id])
 
-  user    User?    @relation(fields: [userId], references: [id])
-  partner Partner? @relation(fields: [partnerId], references: [id])
-
-  @@map("push_notification_tokens")
   @@index([userId])
   @@index([partnerId])
   @@index([token])
+  @@map("push_notification_tokens")
 }
 
-// --------------------------------------------------------
-// 7. Admin & System
-// --------------------------------------------------------
-
 model AdminUser {
-  id           String   @id @default(uuid()) @db.Uuid
+  id                   String                 @id @default(uuid()) @db.Uuid
+  email                String                 @unique @db.VarChar(255)
+  passwordHash         String                 @map("password_hash") @db.VarChar(255)
+  fullName             String                 @map("full_name") @db.VarChar(255)
+  role                 String                 @default("admin") @db.VarChar(50)
+  permissions          Json?
+  isActive             Boolean                @default(true) @map("is_active")
+  lastLoginAt          DateTime?              @map("last_login_at")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @default(now()) @updatedAt @map("updated_at")
+  auditLogs            AuditLog[]
   bookingStatusUpdates BookingStatusHistory[]
-  email        String   @unique @db.VarChar(255)
-  passwordHash String   @map("password_hash") @db.VarChar(255)
-  fullName     String   @map("full_name") @db.VarChar(255)
-  role         String   @default("admin") @db.VarChar(50) // super_admin, admin, support
-  permissions  Json?
-  isActive     Boolean  @default(true) @map("is_active")
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  verifiedDocs         PartnerDocument[]
+  verifiedPartners     Partner[]
 
-  verifiedPartners Partner[]
-  verifiedDocs     PartnerDocument[]
-  auditLogs        AuditLog[]
-
-  @@map("admin_users")
   @@index([email])
+  @@map("admin_users")
 }
 
 model AuditLog {
-  id          String   @id @default(uuid()) @db.Uuid
-  adminUserId String?  @map("admin_user_id") @db.Uuid
-  userId      String?  @map("user_id") @db.Uuid
-  partnerId   String?  @map("partner_id") @db.Uuid
-  
-  action      String   @db.VarChar(100)
-  entityType  String   @map("entity_type") @db.VarChar(100)
-  entityId    String?  @map("entity_id") @db.Uuid
-  
-  oldValues   Json?    @map("old_values")
-  newValues   Json?    @map("new_values")
+  id          String     @id @default(uuid()) @db.Uuid
+  adminUserId String?    @map("admin_user_id") @db.Uuid
+  userId      String?    @map("user_id") @db.Uuid
+  partnerId   String?    @map("partner_id") @db.Uuid
+  action      String     @db.VarChar(100)
+  entityType  String     @map("entity_type") @db.VarChar(100)
+  entityId    String?    @map("entity_id") @db.Uuid
+  oldValues   Json?      @map("old_values")
+  newValues   Json?      @map("new_values")
   metadata    Json?
-  
-  ipAddress   String?  @map("ip_address") @db.Inet
-  userAgent   String?  @map("user_agent")
-  createdAt   DateTime @default(now()) @map("created_at")
+  ipAddress   String?    @map("ip_address") @db.Inet
+  userAgent   String?    @map("user_agent")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  adminUser   AdminUser? @relation(fields: [adminUserId], references: [id])
+  partner     Partner?   @relation(fields: [partnerId], references: [id])
+  user        User?      @relation(fields: [userId], references: [id])
 
-  adminUser AdminUser? @relation(fields: [adminUserId], references: [id])
-  user      User?      @relation(fields: [userId], references: [id])
-  partner   Partner?   @relation(fields: [partnerId], references: [id])
-
-  @@map("audit_logs")
   @@index([entityType, entityId])
   @@index([adminUserId])
   @@index([action])
+  @@map("audit_logs")
 }
 
 model SystemSetting {
@@ -1073,6 +894,6 @@ model SystemSetting {
   description  String?
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@map("system_settings")
   @@index([settingKey])
+  @@map("system_settings")
 }
